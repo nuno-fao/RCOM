@@ -5,6 +5,7 @@ int main(int argc, char** argv)
     int fd,c, res;
     struct termios oldtio,newtio;
     char buf[1];
+    enum state estado=START;
 
     if ( (argc < 2) || 
   	     ((strcmp("/dev/ttyS0", argv[1])!=0) && 
@@ -28,10 +29,38 @@ int main(int argc, char** argv)
     while(TRUE){
     	int i=0;
     	char string[255];
+      char A, C;
+      bool error=false;
     	//ler caracter a caracter
     	while (TRUE) {     
     	  	res = read(fd,buf,1);
-          printf("%x\n",*buf);
+          if(estado==START && *buf==0x7d){
+            estado=FLAGRCV;
+          }
+          else if(estado!=START && *buf==0x7d){
+            estado=START;
+          }
+          else if(estado==FLAGRCV){
+            if(*buf!=0x03){
+              error=true;
+            }
+            A=*buf;
+            estado=ARCV;
+          }
+          else if(estado==ARCV){
+            if(*buf!=0x03){
+              error=true;
+            }
+            C=*buf;
+            estado=CRCV;
+          }
+          else if(estado==CRCV){
+            if(*buf != (A ^ C)){
+              error=true;
+            }
+            estado=BCC;
+          }
+          printf("%x\n",estado);
     	  	if(buf[0]==0){
     	  		string[i]=0;
     	  		break;
