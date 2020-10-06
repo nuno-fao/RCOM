@@ -43,12 +43,16 @@ int main(int argc, char** argv)
     	  
     	  if(!recvd_bytes || error){
             	estado=START;
-    	  	write(fd,set,5);    
+    	  	write(fd,set,5);
+    	  	printf("ERRO\n");    
     	  	continue;	  	
     	  }
     	  
-          if(*buf==0x7d){
+          if(*buf==0x7d && estado!=BCC){
             estado=FLAGRCV;
+          }
+          else if(*buf==0x7d){
+            break;
           }
           else if(estado==FLAGRCV){
             if(*buf!=0x03){
@@ -70,12 +74,11 @@ int main(int argc, char** argv)
             }
             estado=BCC;
           }
-    	  if(buf[0]==0){
-    	  	string[i]=0;
-    	  	break;
-    	  }
+          
     	  string[i++]=buf[0];    	  	
     	}
+    	  printf("Tudo Bem\n");   
+    	
     	
     	
     	
