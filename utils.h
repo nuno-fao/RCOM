@@ -14,6 +14,15 @@
 #define FALSE 0
 #define TRUE 1
 
+enum state{
+    START,
+    FLAGRCV,
+    ARCV,
+    CRCV,
+    BCC,
+    STOP
+};
+
 int setTermIO(struct termios *newtio,struct termios *oldtio,int fd,int vtime,int vmin);
  
 int resetTermIO(struct termios *oldtio,int fd);
