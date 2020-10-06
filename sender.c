@@ -32,40 +32,16 @@ int main(int argc, char** argv)
 
     while(TRUE){
     	char str[255];
-    	//printf("SENDER:\t");
-    	
-    	//pedir input e for�ar a input n�o vazio
-    	/*while((gets(str)==0 && 0) || str[0]==0){
-    		printf("\nSENDER:\t");    		
-    	}
-    	int i;
-    	
-    	//verificar posi��o do "\0"
-    	for(i=0;i<255;i++){
-    		if(str[i]==0)
-    			break;
-    	}
-    	
-    	//enviar a string
-    	write(fd,str,i+1);
-    	
-    	char rcv_str[255];
-    	
-    	//ler a resposta do recetor
-    	read(fd,rcv_str,255);
-    	
-    	//verificar que a resposta � igual � msg enviada
-    	if(strcmp(rcv_str,str)){
-    		printf("SENT:\t%s\n",str);
-    		printf("RECEIVED:\t%s\n",rcv_str);
-    	}    */
     	
     	char set[5];
-    	setHeader(0x7d,0x03,0x03,set,0x7d);
-		write(fd,set,5);
     	
-    	char rcv_str[1];
-    	int recvd_bytes = read(fd,rcv_str,1);
+    	char rcv_str[1];	
+    	while(true){
+    		setHeader(0x7d,0x03,0x03,set,0x7d);
+		write(fd,set,5);
+    		int recvd_bytes = read(fd,rcv_str,1);
+    		if(recvd_bytes) continue;
+    	}
     	
     	
     	//printf("%d\n",recvd_bytes);
