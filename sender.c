@@ -3,6 +3,14 @@
 #include <stdio.h>
 #include <string.h>
 
+void setHeader(char endereco, char controlo,char *str){
+	str[0] = 0x7d;
+	str[1] = endereco;
+	str[2] = controlo;
+	str[3] = endereco ^ controlo;
+	str[4] = 0x7d;
+}
+
 int main(int argc, char** argv)
 {
     int fd,c, res;
@@ -25,8 +33,9 @@ int main(int argc, char** argv)
     
     fd = open(argv[1], O_RDWR | O_NOCTTY );
     if (fd <0) {perror(argv[1]); exit(-1); }
+    printf("teste\n");
 
-    if(setTermIO(&newtio,&oldtio,fd,0,1)) exit(-1);  /* blocking read until 5 chars received */
+    if(setTermIO(&newtio,&oldtio,fd,30,0)) exit(-1);  /* blocking read until 5 chars received */
     
 
     while(TRUE){
@@ -34,7 +43,7 @@ int main(int argc, char** argv)
     	printf("SENDER:\t");
     	
     	//pedir input e forçar a input não vazio
-    	while((gets(str)==0 && 0) || str[0]==0){
+    	/*while((gets(str)==0 && 0) || str[0]==0){
     		printf("\nSENDER:\t");    		
     	}
     	int i;
@@ -57,12 +66,21 @@ int main(int argc, char** argv)
     	if(strcmp(rcv_str,str)){
     		printf("SENT:\t%s\n",str);
     		printf("RECEIVED:\t%s\n",rcv_str);
-    	}    
+    	}    */
     	
-    	printf("Received:\t%s\n\n",str);
+    	char set[5];
+    	setHeader(0x03,0x03,set);
+    	
+    	char rcv_str[1];
+    	int recvd_bytes = read(fd,rcv_str,1);
+    	
+    	
+    	printf("%d\n",recvd_bytes);
     	bzero(&rcv_str, sizeof(rcv_str));
     }
     resetTermIO(&oldtio,fd);
     close(fd);
     return 0;
 }
+
+
