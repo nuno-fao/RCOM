@@ -29,24 +29,58 @@ int main(int argc, char** argv)
 
     if(setTermIO(&newtio,&oldtio,fd,30,0)) exit(-1);  /* blocking read until 5 chars received */
     
-
-    while(TRUE){
     	char str[255];
     	
     	char set[5];
     	
-    	char rcv_str[1];	
-    	while(true){
-    		setHeader(0x7d,0x03,0x03,set,0x7d);
-		write(fd,set,5);
-    		int recvd_bytes = read(fd,rcv_str,1);
-    		if(recvd_bytes) continue;
+    	char rcv_str[1];
+    	
+    	setHeader(0x7d,0x03,0x03,set,0x7d);
+	write(fd,set,5);
+	
+    	while (TRUE) {     
+    	  int recvd_bytes = read(fd,rcv_str,1);
+    	  
+    	  if(!recvd_bytes || error){
+            	estado=START;
+    	  	write(fd,set,5);    
+    	  	continue;	  	
+    	  }
+    	  
+          if(*buf==0x7d){
+            estado=FLAGRCV;
+          }
+          else if(estado==FLAGRCV){
+            if(*buf!=0x03){
+              error=true;
+            }
+            A=*buf;
+            estado=ARCV;
+          }
+          else if(estado==ARCV){
+            if(*buf!=0x07){
+              error=true;
+            }
+            C=*buf;
+            estado=CRCV;
+          }
+          else if(estado==CRCV){
+            if(*buf != (A ^ C)){
+              error=true;
+            }
+            estado=BCC;
+          }
+    	  if(buf[0]==0){
+    	  	string[i]=0;
+    	  	break;
+    	  }
+    	  string[i++]=buf[0];    	  	
     	}
+    	
     	
     	
     	//printf("%d\n",recvd_bytes);
     	bzero(&rcv_str, sizeof(rcv_str));
-    }
     resetTermIO(&oldtio,fd);
     close(fd);
     return 0;
