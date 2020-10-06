@@ -1,4 +1,4 @@
-#include "termio_f.h"
+#include "utils.h"
 
 int main(int argc, char** argv)
 {
@@ -31,13 +31,14 @@ int main(int argc, char** argv)
     	//ler caracter a caracter
     	while (TRUE) {     
     	  	res = read(fd,buf,1);
+          printf("%x\n",*buf);
     	  	if(buf[0]==0){
     	  		string[i]=0;
     	  		break;
     	  	}
     	  	string[i++]=buf[0];    	  	
     	}
-    	printf("\nRECEIVER:\t%s\n",string);
+    	//printf("\nRECEIVER:\t%s\n",string);
     	write(fd,string,i);
     }
 

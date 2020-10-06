@@ -7,6 +7,7 @@
 #include <strings.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -16,3 +17,5 @@
 int setTermIO(struct termios *newtio,struct termios *oldtio,int fd,int vtime,int vmin);
  
 int resetTermIO(struct termios *oldtio,int fd);
+
+void setHeader(char flag, char endereco, char controlo,char *str, char bcc);

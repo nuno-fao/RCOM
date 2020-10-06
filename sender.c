@@ -1,15 +1,7 @@
 /*Non-Canonical Input Processing*/
-#include "termio_f.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
-
-void setHeader(char endereco, char controlo,char *str){
-	str[0] = 0x7d;
-	str[1] = endereco;
-	str[2] = controlo;
-	str[3] = endereco ^ controlo;
-	str[4] = 0x7d;
-}
 
 int main(int argc, char** argv)
 {
@@ -40,15 +32,15 @@ int main(int argc, char** argv)
 
     while(TRUE){
     	char str[255];
-    	printf("SENDER:\t");
+    	//printf("SENDER:\t");
     	
-    	//pedir input e forçar a input não vazio
+    	//pedir input e forï¿½ar a input nï¿½o vazio
     	/*while((gets(str)==0 && 0) || str[0]==0){
     		printf("\nSENDER:\t");    		
     	}
     	int i;
     	
-    	//verificar posição do "\0"
+    	//verificar posiï¿½ï¿½o do "\0"
     	for(i=0;i<255;i++){
     		if(str[i]==0)
     			break;
@@ -62,20 +54,21 @@ int main(int argc, char** argv)
     	//ler a resposta do recetor
     	read(fd,rcv_str,255);
     	
-    	//verificar que a resposta é igual à msg enviada
+    	//verificar que a resposta ï¿½ igual ï¿½ msg enviada
     	if(strcmp(rcv_str,str)){
     		printf("SENT:\t%s\n",str);
     		printf("RECEIVED:\t%s\n",rcv_str);
     	}    */
     	
     	char set[5];
-    	setHeader(0x03,0x03,set);
+    	setHeader(0x7d,0x03,0x03,set,0x7d);
+		write(fd,set,5);
     	
     	char rcv_str[1];
     	int recvd_bytes = read(fd,rcv_str,1);
     	
     	
-    	printf("%d\n",recvd_bytes);
+    	//printf("%d\n",recvd_bytes);
     	bzero(&rcv_str, sizeof(rcv_str));
     }
     resetTermIO(&oldtio,fd);

@@ -1,13 +1,13 @@
 ############################# Makefile ##########################
 all: receiver sender
-receiver: termio_f.o  receiver.o
-	gcc -o receiver receiver.o termio_f.o
+receiver: utils.o  receiver.o
+	gcc -o receiver receiver.o utils.o
         
-sender: termio_f.o  sender.o
-	gcc -o sender sender.o termio_f.o
+sender: utils.o  sender.o
+	gcc -o sender sender.o utils.o
         
-termio_f.o: termio_f.c
-	gcc -o termio_f.o -c termio_f.c
+utils.o: utils.c
+	gcc -o utils.o -c utils.c
 receiver.o: 
 	gcc -o receiver.o -c receiver.c
 sender.o:

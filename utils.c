@@ -1,6 +1,6 @@
 /*Non-Canonical Input Processing*/
 
-#include "termio_f.h"
+#include "utils.h"
 
 
 int setTermIO(struct termios *newtio,struct termios *oldtio,int fd,int vtime,int vmin){
@@ -20,7 +20,7 @@ int setTermIO(struct termios *newtio,struct termios *oldtio,int fd,int vtime,int
   
   	/* 
     		VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-    		leitura do(s) próximo(s) caracter(es)
+    		leitura do(s) prï¿½ximo(s) caracter(es)
   	*/
 
     	newtio->c_cc[VTIME]    = vtime;   /* inter-character timer unused */
@@ -37,4 +37,12 @@ int setTermIO(struct termios *newtio,struct termios *oldtio,int fd,int vtime,int
  
 int resetTermIO(struct termios *oldtio,int fd){
     tcsetattr(fd,TCSANOW,oldtio);
+}
+
+void setHeader(char flag, char endereco, char controlo,char *str, char bcc){
+	str[0] = flag;
+	str[1] = endereco;
+	str[2] = controlo;
+	str[3] = endereco ^ controlo;
+	str[4] = bcc;
 }
