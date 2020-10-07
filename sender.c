@@ -37,6 +37,9 @@ int main(int argc, char** argv)
     	
     	setHeader(0x7d,0x03,0x03,set,0x7d);
 	write(fd,set,5);
+	bool error = false;
+	enum state estado;
+	char A,C;
 	
     	while (TRUE) {     
     	  int recvd_bytes = read(fd,rcv_str,1);
@@ -73,9 +76,7 @@ int main(int argc, char** argv)
               error=true;
             }
             estado=BCC;
-          }
-          
-    	  string[i++]=buf[0];    	  	
+          }   	  	
     	}
     	  printf("Tudo Bem\n");   
     	
