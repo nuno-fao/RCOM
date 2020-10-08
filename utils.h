@@ -15,12 +15,12 @@
 #define TRUE 1
 
 enum state{
-    START,
-    FLAGRCV,
-    ARCV,
-    CRCV,
-    BCC,
-    STOP
+    START = 0,
+    FLAGRCV = 1,
+    ARCV = 2,
+    CRCV = 3,
+    BCC = 4,
+    STOP = 5
 };
 
 int setTermIO(struct termios *newtio,struct termios *oldtio,int fd,int vtime,int vmin);

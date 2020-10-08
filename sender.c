@@ -47,6 +47,7 @@ int main(int argc, char** argv)
     	  if(!recvd_bytes || error){
             	estado=START;
     	  	write(fd,set,5);
+          printf("%x\n",*rcv_str);
     	  	printf("ERRO\n");    
     	  	continue;	  	
     	  }
@@ -76,7 +77,8 @@ int main(int argc, char** argv)
               error=true;
             }
             estado=BCC;
-          }   	  	
+          }  
+          printf("%x",estado); 	  	
     	}
     	  printf("Tudo Bem\n");   
     	

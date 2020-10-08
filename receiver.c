@@ -29,16 +29,18 @@ int main(int argc, char** argv)
     while(TRUE){
     	int i=0;
     	char string[255];
+      char set[5];
       char A, C;
       bool error=false;
     	//ler caracter a caracter
     	while (TRUE) {     
     	  	res = read(fd,buf,1);
-          if(estado==START && *buf==0x7d){
+          if(*buf==0x7d ){
+            if(estado==BCC){
+              estado=START;
+              break;
+            }
             estado=FLAGRCV;
-          }
-          else if(estado!=START && *buf==0x7d){
-            estado=START;
           }
           else if(estado==FLAGRCV){
             if(*buf!=0x03){
@@ -59,16 +61,19 @@ int main(int argc, char** argv)
               error=true;
             }
             estado=BCC;
+            if(!error){
+              setHeader(0x7d,0x03,0x07,set,0x7d);
+            }
+            else{
+              setHeader(0x7d,0x03,0x00,set,0x7d);
+            }
+            write(fd,set,i);
+            
           }
-          printf("%x\n",estado);
-    	  	if(buf[0]==0){
-    	  		string[i]=0;
-    	  		break;
-    	  	}
-    	  	string[i++]=buf[0];    	  	
+          printf("%x\n",estado);	
     	}
     	//printf("\nRECEIVER:\t%s\n",string);
-    	write(fd,string,i);
+    	
     }
 
     resetTermIO(&oldtio,fd);
