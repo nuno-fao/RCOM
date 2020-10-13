@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     	//ler caracter a caracter
     	while (TRUE) {     
     	  	res = read(fd,buf,1);
-          if(*buf==0x7d ){
+          if(*buf==0x7e ){
             if(estado==BCC){
               estado=START;
               break;
@@ -62,10 +62,10 @@ int main(int argc, char** argv)
             }
             estado=BCC;
             if(!error){
-              setHeader(0x7d,0x03,0x07,set,0x7d);
+              setHeader(0x7e,0x03,0x07,set,0x7e);
             }
             else{
-              setHeader(0x7d,0x03,0x00,set,0x7d);
+              setHeader(0x7e,0x03,0x00,set,0x7e);
             }
             write(fd,set,5);
             

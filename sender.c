@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     	
     	char rcv_str[1];
     	
-    	setHeader(0x7d,0x03,0x03,set,0x7d);
+    	setHeader(0x7e,0x03,0x03,set,0x7e);
 	write(fd,set,5);
 	bool error = false;
 	enum state estado;
@@ -54,10 +54,10 @@ int main(int argc, char** argv)
     	  	continue;	  	
     	  }
     	  
-          if(*rcv_str==0x7d && estado!=BCC){
+          if(*rcv_str==0x7e && estado!=BCC){
             estado=FLAGRCV;
           }
-          else if(*rcv_str==0x7d){
+          else if(*rcv_str==0x7e){
             break;
           }
           else if(estado==FLAGRCV){
