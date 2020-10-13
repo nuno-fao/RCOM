@@ -16,3 +16,6 @@ sender.o:
 	
 clean:
 	rm *.o receiver sender
+	
+cable:
+	gcc cable.c -o cable

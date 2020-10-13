@@ -41,44 +41,46 @@ int main(int argc, char** argv)
 	enum state estado;
 	char A,C;
 	
-    	while (TRUE) {     
-    	  int recvd_bytes = read(fd,rcv_str,1);
+    	while (TRUE) {  
+    	  int recvd_bytes = 0;   
+    	  recvd_bytes = read(fd,rcv_str,1);
+          printf("%x\n",*rcv_str);
     	  
-    	  if(!recvd_bytes || error){
+    	  if(recvd_bytes==0 || error){
             	estado=START;
     	  	write(fd,set,5);
-          printf("%x\n",*rcv_str);
-    	  	printf("ERRO\n");    
+    	  	printf("ERROoooooooooooooooooooooooooooooo\n");    
+    	  	error = false;
     	  	continue;	  	
     	  }
     	  
-          if(*buf==0x7d && estado!=BCC){
+          if(*rcv_str==0x7d && estado!=BCC){
             estado=FLAGRCV;
           }
-          else if(*buf==0x7d){
+          else if(*rcv_str==0x7d){
             break;
           }
           else if(estado==FLAGRCV){
-            if(*buf!=0x03){
+            if(*rcv_str!=0x03){
               error=true;
             }
-            A=*buf;
+            A=*rcv_str;
             estado=ARCV;
           }
           else if(estado==ARCV){
-            if(*buf!=0x07){
+            if(*rcv_str!=0x07){
               error=true;
             }
-            C=*buf;
+            C=*rcv_str;
             estado=CRCV;
           }
           else if(estado==CRCV){
-            if(*buf != (A ^ C)){
+            if(*rcv_str != (A ^ C)){
               error=true;
             }
             estado=BCC;
           }  
-          printf("%x",estado); 	  	
+          printf("ESTADO %x\n",estado); 	  	
     	}
     	  printf("Tudo Bem\n");   
     	
