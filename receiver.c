@@ -8,8 +8,8 @@ int main(int argc, char** argv)
     enum state estado=START;
 
     if ( (argc < 2) || 
-  	     ((strcmp("/dev/ttyS0", argv[1])!=0) && 
-  	      (strcmp("/dev/ttyS1", argv[1])!=0) )) {
+  	     ((strcmp("/dev/ttyS10", argv[1])!=0) && 
+  	      (strcmp("/dev/ttyS11", argv[1])!=0) )) {
       printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
       exit(1);
     }
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
             else{
               setHeader(0x7d,0x03,0x00,set,0x7d);
             }
-            write(fd,set,i);
+            write(fd,set,5);
             
           }
           printf("%x\n",estado);	
