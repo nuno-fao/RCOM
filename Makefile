@@ -1,5 +1,5 @@
 ############################# Makefile ##########################
-all: receiver sender
+all: receiver sender cable
 receiver: utils.o  receiver.o
 	gcc -o receiver receiver.o utils.o
         
@@ -15,7 +15,7 @@ sender.o:
 	
 	
 clean:
-	rm *.o receiver sender
+	rm *.o receiver sender cable
 	
 cable:
 	gcc cable.c -o cable
