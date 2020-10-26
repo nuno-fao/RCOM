@@ -228,3 +228,7 @@ int llclose(int linkLayerNumber)
     }
     return 0;
 }
+
+int llwrite(int fd, char * buffer, int length){
+    return 1;
+}

@@ -1,3 +1,5 @@
+#include "macro.h"
+
 enum flag
 {
     TRANSMITTER = 0,
@@ -11,7 +13,7 @@ struct linkLayer
     unsigned int sequenceNumber;   /*Número de sequência da trama: 0, 1*/
     unsigned int timeout;          /*Valor do temporizador: 1 s*/
     unsigned int numTransmissions; /*Número de tentativas em caso def alha*/
-    char frame[4096];               /*Trama*/
+    char frame[TRAMA_SIZE];               /*Trama*/
     int fd;
 };
 enum state{
@@ -25,3 +27,4 @@ enum state{
 
 int llopen(int porta,enum flag flag);
 int llclose(int ll);
+int llwrite(int fd, char * buffer, int length);
