@@ -1,21 +1,6 @@
-############################# Makefile ##########################
-all: receiver sender cable
-receiver: utils.o  receiver.o
-	gcc -o receiver receiver.o utils.o
-        
-sender: utils.o  sender.o
-	gcc -o sender sender.o utils.o
-        
-utils.o: utils.c
-	gcc -o utils.o -c utils.c
-receiver.o: 
-	gcc -o receiver.o -c receiver.c
-sender.o:
-	gcc -o sender.o -c sender.c
-	
-	
-clean:
-	rm *.o receiver sender cable
-	
-cable:
-	gcc cable.c -o cable
+cableBuild:
+	gcc cable.c -o ./build/cable
+appBuild:
+	gcc app.c link.c -o ./build/app
+cableRun: cableBuild
+	sudo ./build/cable
