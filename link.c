@@ -245,3 +245,20 @@ int llwrite(int fd, char * buffer, int length){
 int llread(int fd, char * buffer){
     return 1;
 }
+
+int infoPacket(char* packet, char* fromApp, int packetLength, char A, char C){
+    packet[0]=FLAG;
+    packet[1]=A;
+    packet[2]=C;
+    packet[3]=A^C;
+    char bcc2 = 0x00;
+    for (int i=0;i<packetLength;i++){
+        packet[i+4]=fromApp[i];
+        bcc2=bcc2^fromApp[i];
+    }
+    packet[packetLength+4]=bcc2;
+    packet[packetLength+5]=FLAG;
+
+    return 0;
+
+}
