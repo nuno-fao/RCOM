@@ -9,12 +9,22 @@
 #include <string.h>
 #include <signal.h>
 
-enum flag global_flag;
+deviceType global_flag;
 
-struct linkLayer linkNumber[512];
+linkLayer linkNumber[512];
 int linkCounter = 0;
 
-int receive(struct linkLayer *linkLayer, char expected);
+int dataSize = 16;
+int dataSizeCounter = 0;
+
+void *getPointer(void *pointer){
+    if(dataSizeCounter == dataSize - 1){
+        return realloc(pointer,dataSize*2);
+    }
+    return pointer;
+}
+
+int receive(linkLayer *linkLayer, char expected);
 
 void setHeader(char flag, char endereco, char controlo, char *str)
 {
@@ -32,7 +42,7 @@ void atende() // atende alarme
     conta++;
 }
 
-int send_receive(struct linkLayer *linkLayer, char expected, char send)
+int send_receive(linkLayer *linkLayer, char expected, char send)
 {
     flag = 1;
     conta = 1;
@@ -57,14 +67,14 @@ int send_receive(struct linkLayer *linkLayer, char expected, char send)
     }
 }
 
-int receive(struct linkLayer *linkLayer, char expected)
+int receive(linkLayer *linkLayer, char expected)
 {
     int res;
     char rcv_str[1];
     char set[5];
     char A, C;
     bool error = false;
-    enum state estado = START;
+    state estado = START;
     while (true)
     {
         res = read(linkLayer->fd, rcv_str, 1);
@@ -115,7 +125,7 @@ int receive(struct linkLayer *linkLayer, char expected)
     }
 }
 
-int setupLinkLayer(struct linkLayer *linkLayer, int porta, int baudRate, int sequenceNumber, int timeout, int numTransmissions)
+int setupLinkLayer(linkLayer *linkLayer, int porta, int baudRate, int sequenceNumber, int timeout, int numTransmissions)
 {
     sprintf(linkLayer->port, "/dev/ttyS%d", porta);
     linkLayer->baudRate = baudRate;
@@ -124,7 +134,7 @@ int setupLinkLayer(struct linkLayer *linkLayer, int porta, int baudRate, int seq
     linkLayer->numTransmissions = numTransmissions;
 }
 
-int setTermIO(struct termios *newtio, struct termios *oldtio, struct linkLayer *linkLayer, int vtime, int vmin)
+int setTermIO(struct termios *newtio, struct termios *oldtio, linkLayer *linkLayer, int vtime, int vmin)
 {
 
     if (tcgetattr(linkLayer->fd, oldtio) == -1)
@@ -164,7 +174,7 @@ int resetTermIO(struct termios *oldtio, int fd)
     tcsetattr(fd, TCSANOW, oldtio);
 }
 
-int llopen(int porta, enum flag flag)
+int llopen(int porta, deviceType flag)
 {
     int linkLayerNumber = linkCounter++;
     struct termios oldtio, newtio;
@@ -230,5 +240,8 @@ int llclose(int linkLayerNumber)
 }
 
 int llwrite(int fd, char * buffer, int length){
+    return 1;
+}
+int llread(int fd, char * buffer){
     return 1;
 }
