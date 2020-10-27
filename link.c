@@ -8,7 +8,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include <signal.h>
+#include <stdint.h>
 
+int receive(linkLayer *linkLayer, char expected);
+void changeSeqNumber(unsigned int *seqNumber);
+
+int flag = 1, conta = 1;
 deviceType global_flag;
 
 linkLayer linkNumber[512];
@@ -24,8 +29,6 @@ void *getPointer(void *pointer){
     return pointer;
 }
 
-int receive(linkLayer *linkLayer, char expected);
-
 void setHeader(char flag, char endereco, char controlo, char *str)
 {
     str[0] = flag;
@@ -35,7 +38,6 @@ void setHeader(char flag, char endereco, char controlo, char *str)
     str[4] = flag;
 }
 
-int flag = 1, conta = 1;
 void atende() // atende alarme
 {
     flag = 1;
@@ -238,9 +240,27 @@ int llclose(int linkLayerNumber)
     return 0;
 }
 
-int llwrite(int fd, unsigned char * buffer, int length){
+int llwrite(int fd, unsigned char *buffer, int length){
+    uint8_t *packet = malloc(length+6);
+    uint8_t *stuffedPacket = malloc((length+6)*2);
+    if(infoPacket(packet,buffer,length,SNDR_COMMAND,linkNumber[fd].sequenceNumber)){
+
+    }
+    changeSeqNumber(&linkNumber[fd].sequenceNumber);
+    
+    free(packet);
+    free(stuffedPacket);    
     return 1;
 }
+
+uint8_t getBCC2(uint8_t *packet,int length){
+    unsigned char bcc2 = 0x00;
+    for (int i=0;i<length;i++){
+        packet[i+4]=packet[i];
+        bcc2=bcc2^packet[i];
+    }    
+}
+
 int llread(int fd, unsigned char * buffer){
     char cona[1];
     read(linkNumber[fd].fd,&cona,1);
@@ -249,19 +269,48 @@ int llread(int fd, unsigned char * buffer){
     return 1;
 }
 
-int infoPacket(char* packet, char* fromApp, int packetLength, char A, char C){
+int infoPacket(unsigned char* packet, int length, unsigned char A, unsigned char C){
     packet[0]=FLAG;
     packet[1]=A;
     packet[2]=C;
     packet[3]=A^C;
-    char bcc2 = 0x00;
-    for (int i=0;i<packetLength;i++){
-        packet[i+4]=fromApp[i];
-        bcc2=bcc2^fromApp[i];
-    }
-    packet[packetLength+4]=bcc2;
-    packet[packetLength+5]=FLAG;
+    
+    packet[length+5]=FLAG;
 
     return 0;
+}
 
+void changeSeqNumber(unsigned int *seqNumber){
+    *seqNumber ^= 0x01;
+}
+
+int byteStuff(unsigned char* data, int size, uint8_t *output) {
+  
+    for(int i = 0; i< size; i++ ){
+        if(data[i] == 0x7e){
+
+        }
+    }
+
+  int finalSize=4;
+
+  for(int i = 4; i < size; i++){
+
+    if(aux[i] == 0x7e && i != (size - 1) ) {
+      data[finalSize] = 0x7d;
+      data[finalSize+1] = 0x5e;
+      finalSize += 2;
+    }
+    else if(aux[i] == ESCAPE_BYTE && i != (size - 1)) {
+      data[finalSize] = 0x7d;
+      data[finalSize+1] = 0x5d;
+      finalSize += 2;
+    }
+    else{
+      data[finalSize] = aux[i];
+      finalSize++;
+    }
+  }
+
+  return finalSize;
 }
