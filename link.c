@@ -60,7 +60,7 @@ int send_receive(linkLayer *linkLayer, char expected, char send)
         if (flag && conta <= linkLayer->numTransmissions)
         {
             flag = 0;
-            printf("Flag %d %d\n", flag, conta);
+            //printf("Flag %d %d\n", flag, conta);
             int wri = write(linkLayer->fd, sendChar, 5);
             alarm(linkLayer->timeout);
         }
@@ -82,8 +82,7 @@ int receive(linkLayer *linkLayer, char expected)
         {
             return -1;
         }
-        //printf("State %d %d\n", estado, linkLayer->fd);
-        printf("Receber %x\n", rcv_str[0]);
+        //printf("Receber %x\n", rcv_str[0]);
         if (*rcv_str == FLAG && estado != BCC)
         {
             estado = FLAGRCV;
@@ -239,10 +238,14 @@ int llclose(int linkLayerNumber)
     return 0;
 }
 
-int llwrite(int fd, char * buffer, int length){
+int llwrite(int fd, unsigned char * buffer, int length){
     return 1;
 }
-int llread(int fd, char * buffer){
+int llread(int fd, unsigned char * buffer){
+    char cona[1];
+    read(linkNumber[fd].fd,&cona,1);
+    printf("%x ",cona[0]);
+    printf("a ler\n");
     return 1;
 }
 

@@ -19,7 +19,7 @@ typedef enum packetType{
 
 
 int sendFile(int linkLayerNumber, char *file);
-void controlPacket(char controlByte, char *packet, int* length, char *file);
-void dataPacket(char *packet, int sequenceNumber,char* data, int size);
-
-int readPacket(char *data, int dataSize, packetType *packetType, void *packet);
+void controlPacket(unsigned char controlByte, unsigned char *packet, int* length, char *file);
+void dataPacket(unsigned char *packet, int sequenceNumber,unsigned char* data, int size);
+int receiveFile(int linkLayerNumber);
+int readPacket(unsigned char *data, int dataSize, packetType *packetType, void *packet);
