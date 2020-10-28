@@ -1,5 +1,5 @@
 
-
+/*
 int byteDestuff(unsigned char* data, int size) {
 
   char aux[size+5];
@@ -27,4 +27,4 @@ int byteDestuff(unsigned char* data, int size) {
   }
 
   return finalSize;
-}
+}*/

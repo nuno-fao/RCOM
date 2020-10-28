@@ -1,3 +1,5 @@
+all: appBuild
+
 cableBuild:
 	gcc cable.c -o ./build/cable
 appBuild:

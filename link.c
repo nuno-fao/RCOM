@@ -12,6 +12,9 @@
 
 int receive(linkLayer *linkLayer, char expected);
 void changeSeqNumber(unsigned int *seqNumber);
+int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket);
+uint8_t getBCC2(uint8_t *packet, int length);
+int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C);
 
 int flag = 1, conta = 1;
 deviceType global_flag;
@@ -22,9 +25,11 @@ int linkCounter = 0;
 int dataSize = 16;
 int dataSizeCounter = 0;
 
-void *getPointer(void *pointer){
-    if(dataSizeCounter == dataSize - 1){
-        return realloc(pointer,dataSize*2);
+void *getPointer(void *pointer)
+{
+    if (dataSizeCounter == dataSize - 1)
+    {
+        return realloc(pointer, dataSize * 2);
     }
     return pointer;
 }
@@ -63,19 +68,18 @@ int send_receive(linkLayer *linkLayer, char expected, char send)
         {
             flag = 0;
             //printf("Flag %d %d\n", flag, conta);
-            int wri = write(linkLayer->fd, sendChar, 5);
+            write(linkLayer->fd, sendChar, 5);
             alarm(linkLayer->timeout);
         }
     }
+    return 0;
 }
 
 int receive(linkLayer *linkLayer, char expected)
 {
     int res;
     char rcv_str[1];
-    char set[5];
     char A, C;
-    bool error = false;
     state estado = START;
     while (true)
     {
@@ -133,6 +137,7 @@ int setupLinkLayer(linkLayer *linkLayer, int porta, int baudRate, int sequenceNu
     linkLayer->sequenceNumber = sequenceNumber;
     linkLayer->timeout = timeout;
     linkLayer->numTransmissions = numTransmissions;
+    return 0;
 }
 
 int setTermIO(struct termios *newtio, struct termios *oldtio, linkLayer *linkLayer, int vtime, int vmin)
@@ -165,7 +170,7 @@ int setTermIO(struct termios *newtio, struct termios *oldtio, linkLayer *linkLay
     if (tcsetattr(linkLayer->fd, TCSANOW, newtio) == -1)
     {
         perror("2\n");
-        exit - 1;
+        return -1;
     }
     return 0;
 }
@@ -173,6 +178,7 @@ int setTermIO(struct termios *newtio, struct termios *oldtio, linkLayer *linkLay
 int resetTermIO(struct termios *oldtio, int fd)
 {
     tcsetattr(fd, TCSANOW, oldtio);
+    return 0;
 }
 
 int llopen(int porta, deviceType flag)
@@ -209,7 +215,7 @@ int llopen(int porta, deviceType flag)
         while (receive(&linkNumber[linkLayerNumber], SET))
         {
         }
-        write(linkNumber[linkLayerNumber].fd,set,5);
+        write(linkNumber[linkLayerNumber].fd, set, 5);
     }
     else
     {
@@ -227,7 +233,7 @@ int llclose(int linkLayerNumber)
         int a = send_receive(&linkNumber[linkLayerNumber], DISC, DISC);
         char set[5];
         setHeader(FLAG, ADDRESS, UA, set);
-        write(linkNumber[linkLayerNumber].fd,set,5);
+        write(linkNumber[linkLayerNumber].fd, set, 5);
     }
     else if (global_flag == RECEIVER)
     {
@@ -240,77 +246,97 @@ int llclose(int linkLayerNumber)
     return 0;
 }
 
-int llwrite(int fd, unsigned char *buffer, int length){
-    uint8_t *packet = malloc(length+6);
-    uint8_t *stuffedPacket = malloc((length+6)*2);
-    if(infoPacket(packet,buffer,length,SNDR_COMMAND,linkNumber[fd].sequenceNumber)){
+int llwrite(int fd, unsigned char *buffer, int length)
+{
 
+    printf("1\n");
+    fflush(stdout);
+    uint8_t *packet = malloc(length + 1);
+    printf("1.1\n");
+    fflush(stdout);
+    uint8_t *stuffedPacket = malloc((length + 1) * 2 + 5);
+    printf("1.2\n");
+    fflush(stdout);
+    printf("2\n");
+    fflush(stdout);
+
+    memcpy(packet, buffer, length);
+    packet[length] = getBCC2(packet,length);
+    length = byteStuff(packet, length + 1, stuffedPacket);
+    printf("3\n");
+    fflush(stdout);
+
+    if (infoPacket(stuffedPacket, length, SNDR_COMMAND, linkNumber[fd].sequenceNumber))
+    {
     }
+
+    printf("4\n\n");
+    fflush(stdout);
     changeSeqNumber(&linkNumber[fd].sequenceNumber);
-    
+
     free(packet);
-    free(stuffedPacket);    
+    free(stuffedPacket);
     return 1;
 }
 
-uint8_t getBCC2(uint8_t *packet,int length){
+uint8_t getBCC2(uint8_t *packet, int length)
+{
     unsigned char bcc2 = 0x00;
-    for (int i=0;i<length;i++){
-        packet[i+4]=packet[i];
-        bcc2=bcc2^packet[i];
-    }    
+    for (int i = 0; i < length; i++)
+    {
+        bcc2 = bcc2 ^ packet[i];
+    }
+    return bcc2;
 }
 
-int llread(int fd, unsigned char * buffer){
+int llread(int fd, unsigned char *buffer)
+{
     char cona[1];
-    read(linkNumber[fd].fd,&cona,1);
-    printf("%x ",cona[0]);
+    read(linkNumber[fd].fd, &cona, 1);
+    printf("%x ", cona[0]);
     printf("a ler\n");
     return 1;
 }
 
-int infoPacket(unsigned char* packet, int length, unsigned char A, unsigned char C){
-    packet[0]=FLAG;
-    packet[1]=A;
-    packet[2]=C;
-    packet[3]=A^C;
-    
-    packet[length+5]=FLAG;
+int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C)
+{
+    packet[0] = FLAG;
+    packet[1] = A;
+    packet[2] = C;
+    packet[3] = A ^ C;
 
+    packet[length + 5] = FLAG;
     return 0;
 }
 
-void changeSeqNumber(unsigned int *seqNumber){
+void changeSeqNumber(unsigned int *seqNumber)
+{
     *seqNumber ^= 0x01;
 }
 
-int byteStuff(unsigned char* data, int size, uint8_t *output) {
-  
-    for(int i = 0; i< size; i++ ){
-        if(data[i] == 0x7e){
-
+int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket)
+{
+    int sum = 0;
+    for (int i = 0; i < size; i++)
+    {
+        if (data[i] == 0x7e)
+        {
+            sum++;
+            stuffedPacket[i + 4] = 0x7d;
+            stuffedPacket[++i + 4] = 0x5e;
+        }
+        else if (data[i] == ESCAPE_BYTE)
+        {
+            sum++;
+            stuffedPacket[i + 4] = 0x7d;
+            stuffedPacket[++i + 4] = 0x5d;
+        }
+        else
+        {
+            stuffedPacket[i + 4] = data[i];
         }
     }
-
-  int finalSize=4;
-
-  for(int i = 4; i < size; i++){
-
-    if(aux[i] == 0x7e && i != (size - 1) ) {
-      data[finalSize] = 0x7d;
-      data[finalSize+1] = 0x5e;
-      finalSize += 2;
-    }
-    else if(aux[i] == ESCAPE_BYTE && i != (size - 1)) {
-      data[finalSize] = 0x7d;
-      data[finalSize+1] = 0x5d;
-      finalSize += 2;
-    }
-    else{
-      data[finalSize] = aux[i];
-      finalSize++;
-    }
-  }
-
-  return finalSize;
+    uint8_t *newstuffedPacket = realloc(stuffedPacket, size + sum + 6);
+    stuffedPacket = newstuffedPacket;
+    return size + sum + 5;
 }

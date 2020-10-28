@@ -21,7 +21,6 @@ int main(int argc, char *argv[])
         {
             sendFile(linkLayerNumber, file);
         }
-        sleep(3);
         llclose(linkLayerNumber);
     }
     else
@@ -33,7 +32,6 @@ int main(int argc, char *argv[])
         {
             receiveFile(linkLayerNumber);
         }
-        sleep(3);
         llclose(linkLayerNumber);
     }
 }
@@ -84,7 +82,8 @@ int sendFile(int linkLayerNumber, char *file)
 
     controlPacket(CTRL_END, CTRLPacket, &size, file);
 
-    if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1){
+    if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
+    {
         return -1;
     }
 }
@@ -118,7 +117,7 @@ int receiveFile(int linkLayerNumber)
     // }
 }
 
-// takes the data receive from llread,its size, and return a packet type(DATA or CONTROL) 
+// takes the data receive from llread,its size, and return a packet type(DATA or CONTROL)
 //and a pointer to a struct with the packet(controllPacket_s and dataPacket_s)
 int readPacket(unsigned char *data, int dataSize, packetType *packetType, void *packet)
 {
@@ -133,21 +132,15 @@ int readPacket(unsigned char *data, int dataSize, packetType *packetType, void *
         uint64_t *size;
         state = data[index++];
         length = data[index++];
-        printf("yo0\n");
-        fflush(stdout);
-        
+
         if (state == 0)
         {
-            printf("yo1\n");
-        fflush(stdout);
             size = (uint64_t *)malloc(8);
             memcpy(size, &data[index++], length);
             index += length;
         }
         else if (state == 1)
         {
-            printf("yo2\n");
-        fflush(stdout);
             name = (char *)malloc(length);
             memcpy(name, &data[index++], length);
             index += length;
@@ -160,16 +153,12 @@ int readPacket(unsigned char *data, int dataSize, packetType *packetType, void *
         length = data[index++];
         if (state == 0)
         {
-            printf("yo3\n");
-        fflush(stdout);
             size = (uint64_t *)malloc(8);
             memcpy(size, &data[index++], length);
             index += length;
         }
         else if (state == 1)
         {
-            printf("yo4\n");
-        fflush(stdout);
             name = (char *)malloc(length);
             memcpy(name, &data[index++], length);
             index += length;
@@ -178,16 +167,12 @@ int readPacket(unsigned char *data, int dataSize, packetType *packetType, void *
         {
             /* code */
         }
-        printf("yo5\n");
-        fflush(stdout);
         *packetType = CONTROL;
         controlPacket_s *controlPacket_s = malloc(sizeof controlPacket_s);
         controlPacket_s->fileName = name;
         controlPacket_s->fileSize = size;
         controlPacket_s->end = data[0] - 2;
         packet = controlPacket_s;
-        printf("yo6\n");
-        fflush(stdout);
         return 0;
     }
     else if (data[index++] == 1)
