@@ -283,7 +283,6 @@ int llwrite(int fd, unsigned char *buffer, int length)
     int destuffedlength = byteDeStuff(stuffedPacket,length);
     //printf("%d\n",i);
 
-    fprintf(stderr,"%d\n",destuffedlength);
     write(1,stuffedPacket,destuffedlength-5);
 
 

@@ -11,6 +11,10 @@ typedef struct dataPacket_s{
     char *data;
 }dataPacket_s;
 
+typedef union packet_u{
+    dataPacket_s d;
+    controlPacket_s c;
+}packet_u;
 
 typedef enum packetType{
     CONTROL = 0,
@@ -22,4 +26,4 @@ int sendFile(int linkLayerNumber, char *file);
 void controlPacket(unsigned char controlByte, unsigned char *packet, int* length, char *file);
 void dataPacket(unsigned char *packet, int sequenceNumber,unsigned char* data, int size);
 int receiveFile(int linkLayerNumber);
-int readPacket(unsigned char *data, int dataSize, packetType *packetType, void *packet);
+int readPacket(unsigned char *data, int dataSize, packetType *packetType, packet_u *packet);
