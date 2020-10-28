@@ -11,7 +11,7 @@
 int main(int argc, char *argv[])
 {
     int arg = atoi(argv[1]);
-    char *file = "./img/pinguim.gif";
+    char *file = "./img/a.zip";
     if (arg == 0)
     {
         int linkLayerNumber = llopen(10, TRANSMITTER);
