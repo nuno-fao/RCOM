@@ -21,7 +21,6 @@ int main(int argc, char *argv[])
         {
             sendFile(linkLayerNumber, file);
         }
-        sleep(3);
         llclose(linkLayerNumber);
     }
     else
@@ -33,7 +32,6 @@ int main(int argc, char *argv[])
         {
             receiveFile(linkLayerNumber);
         }
-        sleep(3);
         llclose(linkLayerNumber);
     }
 }
@@ -60,13 +58,13 @@ int sendFile(int linkLayerNumber, char *file)
 
     controlPacket(CTRL_START, CTRLPacket, &size, file);
 
-    if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
+    /*if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
     {
         return -1;
-    }
-    else
+    }*/
+    if(1)
     {
-
+        int leftSize = size;
         int localSize = size / TRAMA_SIZE;
         int readSize;
         if (size % TRAMA_SIZE > 0)
@@ -77,139 +75,26 @@ int sendFile(int linkLayerNumber, char *file)
         {
             readSize = fread(data, 1, TRAMA_SIZE, fd);
             dataPacket(dataPack, sequenceNumber % 255, data, readSize);
-            if (llwrite(linkLayerNumber, dataPack, TRAMA_SIZE + 4) == -1)
+            if (llwrite(linkLayerNumber, dataPack, readSize + 4) == -1)
                 return -1;
         }
     }
 
     controlPacket(CTRL_END, CTRLPacket, &size, file);
 
-    if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1){
+    /*if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
+    {
         return -1;
-    }
+    }*/
 }
+
 int receiveFile(int linkLayerNumber)
 {
-    int fd;
-    unsigned char *data;
-    int dataSize;
-    if ((dataSize = llread(linkLayerNumber, data)) < 0)
-    {
-    }
 
-    packetType packetType = -1;
-    void *packet;
-    // while (1)
-    // {
-    //     readPacket(data, dataSize, &packetType, packet);
-    //     if (packetType == CONTROL && ((controlPacket_s *)packet)->end)
-    //     {
-    //         break;
-    //     }
-    //     if (packetType == DATA)
-    //     {
-    //         dataPacket_s *dataPacket = ((dataPacket_s*)packet);
-    //         write(fd,dataPacket->data,dataPacket->dataSize);
-    //     }
-    //     else if (packetType == CONTROL)
-    //     {
-    //         fd = open(((controlPacket_s *)packet)->fileName, O_RDWR | O_NOCTTY | O_CREAT);
-    //     }
-    // }
 }
 
-// takes the data receive from llread,its size, and return a packet type(DATA or CONTROL) 
-//and a pointer to a struct with the packet(controllPacket_s and dataPacket_s)
-int readPacket(unsigned char *data, int dataSize, packetType *packetType, void *packet)
+int readPacket(unsigned char *data, int dataSize, packetType *packetType, packet_u *packet)
 {
-    int index = 0;
-
-    //check wich type of packet it is
-    if (data[index++] == 2 || data[index++] == 3)
-    {
-        int state = 0;
-        int length = 0;
-        char *name;
-        uint64_t *size;
-        state = data[index++];
-        length = data[index++];
-        printf("yo0\n");
-        fflush(stdout);
-        
-        if (state == 0)
-        {
-            printf("yo1\n");
-        fflush(stdout);
-            size = (uint64_t *)malloc(8);
-            memcpy(size, &data[index++], length);
-            index += length;
-        }
-        else if (state == 1)
-        {
-            printf("yo2\n");
-        fflush(stdout);
-            name = (char *)malloc(length);
-            memcpy(name, &data[index++], length);
-            index += length;
-        }
-        else
-        {
-            /* code */
-        }
-        state = data[index++];
-        length = data[index++];
-        if (state == 0)
-        {
-            printf("yo3\n");
-        fflush(stdout);
-            size = (uint64_t *)malloc(8);
-            memcpy(size, &data[index++], length);
-            index += length;
-        }
-        else if (state == 1)
-        {
-            printf("yo4\n");
-        fflush(stdout);
-            name = (char *)malloc(length);
-            memcpy(name, &data[index++], length);
-            index += length;
-        }
-        else
-        {
-            /* code */
-        }
-        printf("yo5\n");
-        fflush(stdout);
-        *packetType = CONTROL;
-        controlPacket_s *controlPacket_s = malloc(sizeof controlPacket_s);
-        controlPacket_s->fileName = name;
-        controlPacket_s->fileSize = size;
-        controlPacket_s->end = data[0] - 2;
-        packet = controlPacket_s;
-        printf("yo6\n");
-        fflush(stdout);
-        return 0;
-    }
-    else if (data[index++] == 1)
-    {
-        int state = 0;
-        int length = 0;
-        char *name;
-        uint64_t *size;
-        dataPacket_s *dataPacket_s = malloc(sizeof dataPacket_s);
-
-        dataPacket_s->seqNumber = data[index++];
-        dataPacket_s->dataSize = data[index++] * 256;
-        dataPacket_s->dataSize += data[index++];
-        dataPacket_s->data = malloc(dataPacket_s->dataSize);
-        memcpy(dataPacket_s->data, &data[index++], dataPacket_s->dataSize);
-
-        *packetType = DATA;
-
-        packet = dataPacket_s;
-        return 0;
-    }
-    return -1;
 }
 
 void controlPacket(unsigned char controlByte, unsigned char *packet, int *length, char *file)
@@ -236,3 +121,4 @@ void dataPacket(unsigned char *packet, int sequenceNumber, unsigned char *data, 
     memcpy((void *)&packet[4], (void *)data, size);
     return;
 }
+

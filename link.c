@@ -1,4 +1,4 @@
-#include "headers/link.h"
+﻿#include "headers/link.h"
 #include "headers/macro.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,8 +13,10 @@
 int receive(linkLayer *linkLayer, char expected);
 void changeSeqNumber(unsigned int *seqNumber);
 int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket);
+int byteDeStuff(unsigned char* data, int size);
 uint8_t getBCC2(uint8_t *packet, int length);
 int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C);
+int infoDePack(u_int8_t *packet,int *length,uint8_t *A,uint8_t *C);
 
 int flag = 1, conta = 1;
 deviceType global_flag;
@@ -22,11 +24,17 @@ deviceType global_flag;
 linkLayer linkNumber[512];
 int linkCounter = 0;
 
-int dataSize = 16;
+int dataSize = 0;
 int dataSizeCounter = 0;
 
 void *getPointer(void *pointer)
 {
+    dataSize;
+    dataSizeCounter;
+    if(dataSize == 0){
+        dataSize = 16;
+        return malloc(16);
+    }
     if (dataSizeCounter == dataSize - 1)
     {
         return realloc(pointer, dataSize * 2);
@@ -157,10 +165,10 @@ int setTermIO(struct termios *newtio, struct termios *oldtio, linkLayer *linkLay
     /* set input mode (non-canonical, no echo,...) */
     newtio->c_lflag = 0;
 
-    /* 
-    		VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-    		leitura do(s) pr�ximo(s) caracter(es)
-  	*/
+    /*
+            VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
+            leitura do(s) pr�ximo(s) caracter(es)
+    */
 
     newtio->c_cc[VTIME] = vtime; /* inter-character timer unused */
     newtio->c_cc[VMIN] = vmin;
@@ -246,34 +254,40 @@ int llclose(int linkLayerNumber)
     return 0;
 }
 
+int s = 0;
+
 int llwrite(int fd, unsigned char *buffer, int length)
 {
-
-    printf("1\n");
-    fflush(stdout);
     uint8_t *packet = malloc(length + 1);
-    printf("1.1\n");
-    fflush(stdout);
     uint8_t *stuffedPacket = malloc((length + 1) * 2 + 5);
-    printf("1.2\n");
-    fflush(stdout);
-    printf("2\n");
-    fflush(stdout);
 
     memcpy(packet, buffer, length);
     packet[length] = getBCC2(packet,length);
-    length = byteStuff(packet, length + 1, stuffedPacket);
-    printf("3\n");
-    fflush(stdout);
+    length++;
+    //printf("%d\n",length);
+    length = byteStuff(packet, length , stuffedPacket);
 
     if (infoPacket(stuffedPacket, length, SNDR_COMMAND, linkNumber[fd].sequenceNumber))
     {
     }
-
-    printf("4\n\n");
-    fflush(stdout);
+    //write(linkNumber[fd].fd,stuffedPacket,length+6);
     changeSeqNumber(&linkNumber[fd].sequenceNumber);
 
+    uint8_t A,C;
+    infoDePack(stuffedPacket,&length,&A,&C);
+    for (int i = 0; i < length; i++)
+    {
+        stuffedPacket[i] = stuffedPacket[i+4];
+    }
+
+    int destuffedlength = byteDeStuff(stuffedPacket,length);
+    //printf("%d\n",i);
+
+    fprintf(stderr,"%d\n",destuffedlength);
+    write(1,stuffedPacket,destuffedlength-5);
+
+
+    //write(1,stuffedPacket,length);
     free(packet);
     free(stuffedPacket);
     return 1;
@@ -289,13 +303,9 @@ uint8_t getBCC2(uint8_t *packet, int length)
     return bcc2;
 }
 
-int llread(int fd, unsigned char *buffer)
+int llread(int fd, uint8_t *buffer)
 {
-    char cona[1];
-    read(linkNumber[fd].fd, &cona, 1);
-    printf("%x ", cona[0]);
-    printf("a ler\n");
-    return 1;
+
 }
 
 int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C)
@@ -305,8 +315,13 @@ int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char
     packet[2] = C;
     packet[3] = A ^ C;
 
-    packet[length + 5] = FLAG;
+    packet[length + 4] = FLAG;
     return 0;
+}
+
+int infoDePack(u_int8_t *packet,int *length,uint8_t *A,uint8_t *C){
+    *A =  packet[1];
+    *C =  packet[2];
 }
 
 void changeSeqNumber(unsigned int *seqNumber)
@@ -317,26 +332,61 @@ void changeSeqNumber(unsigned int *seqNumber)
 int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket)
 {
     int sum = 0;
+    int l = 0;
+
     for (int i = 0; i < size; i++)
     {
         if (data[i] == 0x7e)
         {
             sum++;
-            stuffedPacket[i + 4] = 0x7d;
-            stuffedPacket[++i + 4] = 0x5e;
+            stuffedPacket[l++] = 0x7d;
+            stuffedPacket[l++] = 0x5e;
         }
         else if (data[i] == ESCAPE_BYTE)
         {
             sum++;
-            stuffedPacket[i + 4] = 0x7d;
-            stuffedPacket[++i + 4] = 0x5d;
+            stuffedPacket[l++] = 0x7d;
+            stuffedPacket[l++] = 0x5d;
         }
         else
         {
-            stuffedPacket[i + 4] = data[i];
+            stuffedPacket[l++] = data[i];
         }
     }
-    uint8_t *newstuffedPacket = realloc(stuffedPacket, size + sum + 6);
-    stuffedPacket = newstuffedPacket;
-    return size + sum + 5;
+    //printf("STUFF %d\n",sum);
+    return l;
+}
+
+
+int byteDeStuff(unsigned char* data, int size) {
+
+  char aux[size];
+  fprintf(stderr,"%x %x %x %x %d\n",data[0],data[1],data[2],data[3],size);
+
+  memcpy(aux,data,size);
+
+  int finalSize=0;
+  int sum = 0;
+
+
+  for(int i = 0; i < size; i++){
+
+    if(aux[i] == 0x7d ) {
+        if(aux[i+1] == 0x5d){
+            data[finalSize]=0x7d;
+        }
+        else if(aux[i+1] == 0x5e){
+            data[finalSize]=0x7e;
+        }
+      finalSize ++;
+      i++;
+      sum++;
+    }
+    else{
+      data[finalSize] = aux[i];
+      finalSize++;
+    }
+  }
+  //printf("DESTUFF %d\n",sum);
+  return finalSize;
 }
