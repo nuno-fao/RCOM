@@ -260,38 +260,28 @@ int llwrite(int fd, unsigned char *buffer, int length)
 {
     uint8_t *packet = malloc(length + 1);
     uint8_t *stuffedPacket = malloc((length + 1) * 2 + 5);
-    fprintf(stderr,"1\t%x %x %x %x %d\n",buffer[0],buffer[1],buffer[2],buffer[3],length);
 
     memcpy(packet, buffer, length);
-    fprintf(stderr,"2\t%x %x %x %x %d\n",packet[0],packet[1],packet[2],packet[3],length);
     packet[length] = getBCC2(packet,length);
     length++;
     //printf("%d\n",length);
     length = byteStuff(packet, length , stuffedPacket);
-    fprintf(stderr,"3\t%x %x %x %x %d\n",stuffedPacket[0],stuffedPacket[1],stuffedPacket[2],stuffedPacket[3],length);
-
-    uint8_t *a = malloc(length+6);
+        uint8_t *a = malloc(length+6);
     memcpy(&a[4],stuffedPacket,length);
     stuffedPacket = a;
     if (infoPacket(stuffedPacket, length, SNDR_COMMAND, linkNumber[fd].sequenceNumber))
     {
     }
-    fprintf(stderr,"4\t%x %x %x %x %d\n",stuffedPacket[0],stuffedPacket[1],stuffedPacket[2],stuffedPacket[3],length);
     //write(linkNumber[fd].fd,stuffedPacket,length+6);
     changeSeqNumber(&linkNumber[fd].sequenceNumber);
 
     uint8_t A,C;
     infoDePack(stuffedPacket,&length,&A,&C);
-    fprintf(stderr,"5\t%x %x %x %x %d\n",stuffedPacket[0],stuffedPacket[1],stuffedPacket[2],stuffedPacket[3],length);
     for (int i = 0; i < length; i++)
     {
         stuffedPacket[i] = stuffedPacket[i+4];
     }
-    fprintf(stderr,"6\t%x %x %x %x %d\n",stuffedPacket[0],stuffedPacket[1],stuffedPacket[2],stuffedPacket[3],length);
-
     int destuffedlength = byteDeStuff(stuffedPacket,length);
-    fprintf(stderr,"7\t%x %x %x %x %d\n",stuffedPacket[0],stuffedPacket[1],stuffedPacket[2],stuffedPacket[3],length);
-    //printf("%d\n",i);
     for (int i = 0; i < length; i++)
     {
         stuffedPacket[i] = stuffedPacket[i+4];
@@ -345,7 +335,6 @@ int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket)
 {
     int sum = 0;
     int l = 0;
-    fprintf(stderr,"BYTESTUFF\t%x %x %x %x %d\n",data[0],data[1],data[2],data[3],size);
 
     for (int i = 0; i < size; i++)
     {
@@ -374,7 +363,6 @@ int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket)
 int byteDeStuff(unsigned char* data, int size) {
 
   char aux[size];
-  fprintf(stderr,"BYTEDESTUFF\t%x %x %x %x %d\n",data[0],data[1],data[2],data[3],size);
 
   memcpy(aux,data,size);
 
