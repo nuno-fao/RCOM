@@ -213,7 +213,7 @@ int llopen(int porta, deviceType flag)
     }
     else if (flag == RECEIVER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B38400, 1, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B38400, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -266,7 +266,7 @@ int llwrite(int fd, unsigned char *buffer, int length)
     length++;
     //printf("%d\n",length);
     length = byteStuff(packet, length , stuffedPacket);
-        uint8_t *a = malloc(length+6);
+    uint8_t *a = malloc(length+6);
     memcpy(&a[4],stuffedPacket,length);
     stuffedPacket = a;
     if (infoPacket(stuffedPacket, length, SNDR_COMMAND, linkNumber[fd].sequenceNumber))
@@ -275,18 +275,18 @@ int llwrite(int fd, unsigned char *buffer, int length)
     //write(linkNumber[fd].fd,stuffedPacket,length+6);
     changeSeqNumber(&linkNumber[fd].sequenceNumber);
 
-    uint8_t A,C;
-    infoDePack(stuffedPacket,&length,&A,&C);
-    for (int i = 0; i < length; i++)
-    {
-        stuffedPacket[i] = stuffedPacket[i+4];
-    }
-    int destuffedlength = byteDeStuff(stuffedPacket,length);
-    for (int i = 0; i < length; i++)
-    {
-        stuffedPacket[i] = stuffedPacket[i+4];
-    }
-    write(1,stuffedPacket,destuffedlength-5);
+    // uint8_t A,C;
+    // infoDePack(stuffedPacket,&length,&A,&C);
+    // for (int i = 0; i < length; i++)
+    // {
+    //     stuffedPacket[i] = stuffedPacket[i+4];
+    // }
+    // int destuffedlength = byteDeStuff(stuffedPacket,length);
+    // for (int i = 0; i < length; i++)
+    // {
+    //     stuffedPacket[i] = stuffedPacket[i+4];
+    // }
+    write(linkNumber[fd].fd,stuffedPacket,length+5);
 
 
     //write(1,stuffedPacket,length);
@@ -307,6 +307,80 @@ uint8_t getBCC2(uint8_t *packet, int length)
 
 int llread(int fd, uint8_t *buffer)
 {
+    unsigned char A;
+    unsigned char C;
+    unsigned char aux;
+    unsigned char bcc2;
+    unsigned char data[TRAMA_SIZE*2+5];
+    int state = 0;
+    int i=0;
+    int size;
+    bool flagReached=false;
+
+    while(!flagReached){
+        read(linkNumber[fd].fd, &aux, 1);
+        switch(state){
+            case 0:
+            printf("%x st: %i\n",aux,state);
+                if(aux==FLAG){
+                    state=1;
+                }
+                break;
+            case 1:
+            printf("%x st: %i\n",aux,state);
+                if(aux==SNDR_COMMAND){
+                    A=aux;
+                    state=2;
+                }
+                else{
+                    state=0;
+                    //manda erro
+                }
+                break;
+            case 2:
+            printf("%x st: %i\n",aux,state);
+                if(linkNumber[fd].sequenceNumber==aux){
+                    C=aux;
+                    changeSeqNumber(&linkNumber[fd].sequenceNumber);
+                    state=3;
+                }
+                else{
+                    state=0;
+                    //manda erro
+                }
+                break;
+            case 3: 
+            printf("%x st: %i\n",aux,state);
+                if(A^C==aux){
+                    state=4;
+                    
+                }
+                else{
+                    state=0;
+                    //manda erro
+                }
+                break;
+            case 4:
+            printf("%x st: %i\n",aux,state);
+                if(aux!=0x7e)
+                    data[i++]=aux;
+                else flagReached=true;
+                break;
+        }
+    }
+
+    size = byteDeStuff(data,i);
+printf("YOYOYOYOYO %x %x %x %x\n",data[0],data[1],data[2],data[3]);
+    bcc2=getBCC2(data,size-1);
+
+    if(bcc2==data[size]){
+        memcpy(buffer,data,size-1);
+    }
+    else{
+        //erro
+    }
+
+    return size-1;
 
 }
 

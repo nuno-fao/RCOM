@@ -11,7 +11,7 @@
 int main(int argc, char *argv[])
 {
     int arg = atoi(argv[1]);
-    char *file = "./img/a.zip";
+    char *file = "./img/yo";
     if (arg == 0)
     {
         int linkLayerNumber = llopen(10, TRANSMITTER);
@@ -58,11 +58,11 @@ int sendFile(int linkLayerNumber, char *file)
 
     controlPacket(CTRL_START, CTRLPacket, &size, file);
 
-    /*if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
+    if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
     {
         return -1;
-    }*/
-    if(1)
+    }
+    else
     {
         int leftSize = size;
         int localSize = size / TRAMA_SIZE;
@@ -82,19 +82,115 @@ int sendFile(int linkLayerNumber, char *file)
 
     controlPacket(CTRL_END, CTRLPacket, &size, file);
 
-    /*if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
+    if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
     {
         return -1;
-    }*/
+    }
 }
 
 int receiveFile(int linkLayerNumber)
 {
-
+    unsigned char buffer[TRAMA_SIZE+4];
+    int dataSize;
+    int fd;
+    packetType packetType = -1;
+    packet_u packet;
+    while (1)
+    {   
+        if ((dataSize = llread(linkLayerNumber, buffer)) < 0)
+        {
+        }
+        readPacket(buffer, dataSize, &packetType, &packet);
+        if (packetType == CONTROL && packet.c.end)
+        {
+            break;
+        }
+        if (packetType == DATA)
+        {
+            dataPacket_s *dataPacket = &(packet.d);
+            write(fd,dataPacket->data,dataPacket->dataSize);
+        }
+        else if (packetType == CONTROL)
+        {
+            fd = open("coninhas.gif", O_RDWR | O_NOCTTY | O_CREAT);
+        }
+    }
 }
 
 int readPacket(unsigned char *data, int dataSize, packetType *packetType, packet_u *packet)
 {
+    int index = 0;
+
+    //check wich type of packet it is
+    if (data[index] == 2 || data[index] == 3)
+    {
+        index++;
+        int state = 0;
+        int length = 0;
+        char *name;
+        uint64_t *size;
+        state = data[index++];
+        length = data[index++];
+
+        if (state == 0)
+        {
+            size = (uint64_t *)malloc(8);
+            memcpy(size, &data[index], length);
+            index += length;
+        }
+        else if (state == 1)
+        {
+            name = (char *)malloc(length);
+            memcpy(name, &data[index], length);
+            index += length;
+        }
+        else
+        {
+            /* code */
+        }
+        state = data[index++];
+        length = data[index++];
+        if (state == 0)
+        {
+            size = (uint64_t *)malloc(8);
+            memcpy(size, &data[index], length);
+            index += length;
+        }
+        else if (state == 1)
+        {
+            name = (char *)malloc(length);
+            memcpy(name, &data[index], length);
+            index += length;
+        }
+        else
+        {
+            /* code */
+        }
+        *packetType = CONTROL;
+        controlPacket_s *controlPacket_s = malloc(sizeof controlPacket_s);
+        controlPacket_s->fileName = name;
+        controlPacket_s->fileSize = size;
+        controlPacket_s->end = data[0] - 2;
+        packet->c = *controlPacket_s;
+        return 0;
+    }
+    else if (data[index] == 1)
+    {
+        index++;
+        dataPacket_s *dataPacket_s = malloc(sizeof dataPacket_s);
+
+        dataPacket_s->seqNumber = data[index++];
+        dataPacket_s->dataSize = data[index++] * 256;
+        dataPacket_s->dataSize += data[index++];
+        dataPacket_s->data = malloc(dataPacket_s->dataSize);
+        memcpy(dataPacket_s->data, &data[index++], dataPacket_s->dataSize);
+
+        *packetType = DATA;
+
+        packet->d = *dataPacket_s;
+        return 0;
+    }
+    return -1;
 }
 
 void controlPacket(unsigned char controlByte, unsigned char *packet, int *length, char *file)
