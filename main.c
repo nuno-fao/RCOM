@@ -11,7 +11,7 @@
 int main(int argc, char *argv[])
 {
     int arg = atoi(argv[1]);
-    char *file = "./img/yo";
+    char *file = "./img/pinguim.gif";
     if (arg == 0)
     {
         int linkLayerNumber = llopen(10, TRANSMITTER);
@@ -44,7 +44,6 @@ int sendFile(int linkLayerNumber, char *file)
     int size;
     int packetSize = 13 + strlen(file);
     unsigned char CTRLPacket[packetSize];
-    unsigned char data[TRAMA_SIZE];
     unsigned char dataPack[TRAMA_SIZE + 4];
 
     if (fd == NULL)
@@ -73,8 +72,8 @@ int sendFile(int linkLayerNumber, char *file)
         }
         for (int sequenceNumber = 0; sequenceNumber < localSize; sequenceNumber++)
         {
-            readSize = fread(data, 1, TRAMA_SIZE, fd);
-            dataPacket(dataPack, sequenceNumber % 255, data, readSize);
+            readSize = fread(&dataPack[4], 1, TRAMA_SIZE, fd);
+            dataPacket(dataPack, sequenceNumber % 255, readSize);
             if (llwrite(linkLayerNumber, dataPack, readSize + 4) == -1)
                 return -1;
         }
@@ -208,12 +207,11 @@ void controlPacket(unsigned char controlByte, unsigned char *packet, int *length
     return;
 }
 
-void dataPacket(unsigned char *packet, int sequenceNumber, unsigned char *data, int size)
+void dataPacket(unsigned char *packet, int sequenceNumber, int size)
 {
     packet[0] = CTRL_DATA;
     packet[1] = sequenceNumber;
     packet[2] = (uint8_t)(size / 256);
     packet[3] = (uint8_t)(size % 256);
-    memcpy((void *)&packet[4], (void *)data, size);
     return;
 }

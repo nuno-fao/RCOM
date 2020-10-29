@@ -203,7 +203,7 @@ int llopen(int porta, deviceType flag)
 
     if (flag == TRANSMITTER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B38400, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B115200, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -213,7 +213,7 @@ int llopen(int porta, deviceType flag)
     }
     else if (flag == RECEIVER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B38400, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B115200, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -266,31 +266,15 @@ int llwrite(int fd, unsigned char *buffer, int length)
     packet[length] = getBCC2(packet,length);
     length++;
     //printf("%d\n",length);
-    length = byteStuff(packet, length , stuffedPacket);
-    uint8_t *a = malloc(length+5);
-    memcpy(&a[4],stuffedPacket,length);
-    stuffedPacket = a;
+    length = byteStuff(packet, length , &stuffedPacket[4]);
+    
     if (infoPacket(stuffedPacket, length, SNDR_COMMAND, linkNumber[fd].sequenceNumber))
     {
     }
-    //write(linkNumber[fd].fd,stuffedPacket,length+6);
     changeSeqNumber(&linkNumber[fd].sequenceNumber);
 
-    // uint8_t A,C;
-    // infoDePack(stuffedPacket,&length,&A,&C);
-    // for (int i = 0; i < length; i++)
-    // {
-    //     stuffedPacket[i] = stuffedPacket[i+4];
-    // }
-    // int destuffedlength = byteDeStuff(stuffedPacket,length);
-    // for (int i = 0; i < length; i++)
-    // {
-    //     stuffedPacket[i] = stuffedPacket[i+4];
-    // }
     write(linkNumber[fd].fd,stuffedPacket,length+5);
-
-
-    //write(1,stuffedPacket,length);
+    
     free(packet);
     free(stuffedPacket);
     return 1;
@@ -319,7 +303,11 @@ int llread(int fd, uint8_t *buffer)
     bool flagReached=false;
 
     while(!flagReached){
-        read(linkNumber[fd].fd, &aux, 1);
+        int r = read(linkNumber[fd].fd, &aux, 1);
+        if(r == 0){
+        	perror("MERDA");
+        	continue;
+        	}
         switch(state){
         case 0:
             if(aux==FLAG){
@@ -368,11 +356,11 @@ int llread(int fd, uint8_t *buffer)
     bcc2=getBCC2(data,size-1);
 
     if(bcc2==data[size-1]){
-        memcpy(buffer,data,size-1);
     }
     else{
         //erro
     }
+    memcpy(buffer,data,size-1);
 
     return size-1;
 
@@ -428,7 +416,7 @@ int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket)
 }
 
 
-int byteDeStuff(unsigned char* data, int size) {
+int byteDeStuff(unsigned char *data, int size) {
 
     char aux[size];
 

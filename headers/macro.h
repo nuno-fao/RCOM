@@ -7,7 +7,7 @@
 #define REJ 0x01
 #define SNDR_COMMAND 0x03
 #define RECV_COMMAND 0x01
-#define TRAMA_SIZE 1024
+#define TRAMA_SIZE 512
 
 #define BS_ESCAPE 0x5d
 #define BS_FLAG 0x5e
