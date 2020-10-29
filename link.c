@@ -260,13 +260,14 @@ int llwrite(int fd, unsigned char *buffer, int length)
 {
     uint8_t *packet = malloc(length + 1);
     uint8_t *stuffedPacket = malloc((length + 1) * 2 + 5);
+    int u = buffer[0];
 
     memcpy(packet, buffer, length);
     packet[length] = getBCC2(packet,length);
     length++;
     //printf("%d\n",length);
     length = byteStuff(packet, length , stuffedPacket);
-    uint8_t *a = malloc(length+6);
+    uint8_t *a = malloc(length+5);
     memcpy(&a[4],stuffedPacket,length);
     stuffedPacket = a;
     if (infoPacket(stuffedPacket, length, SNDR_COMMAND, linkNumber[fd].sequenceNumber))
@@ -320,60 +321,53 @@ int llread(int fd, uint8_t *buffer)
     while(!flagReached){
         read(linkNumber[fd].fd, &aux, 1);
         switch(state){
-            case 0:
-            printf("%x st: %i\n",aux,state);
-                if(aux==FLAG){
-                    state=1;
-                }
-                break;
-            case 1:
-            printf("%x st: %i\n",aux,state);
-                if(aux==SNDR_COMMAND){
-                    A=aux;
-                    state=2;
-                }
-                else{
-                    state=0;
-                    //manda erro
-                }
-                break;
-            case 2:
-            printf("%x st: %i\n",aux,state);
-                if(linkNumber[fd].sequenceNumber==aux){
-                    C=aux;
-                    changeSeqNumber(&linkNumber[fd].sequenceNumber);
-                    state=3;
-                }
-                else{
-                    state=0;
-                    //manda erro
-                }
-                break;
-            case 3: 
-            printf("%x st: %i\n",aux,state);
-                if(A^C==aux){
-                    state=4;
-                    
-                }
-                else{
-                    state=0;
-                    //manda erro
-                }
-                break;
-            case 4:
-            printf("%x st: %i\n",aux,state);
-                if(aux!=0x7e)
-                    data[i++]=aux;
-                else flagReached=true;
-                break;
+        case 0:
+            if(aux==FLAG){
+                state=1;
+            }
+            break;
+        case 1:
+            if(aux==SNDR_COMMAND){
+                A=aux;
+                state=2;
+            }
+            else{
+                state=0;
+                //manda erro
+            }
+            break;
+        case 2:
+            if(linkNumber[fd].sequenceNumber==aux){
+                C=aux;
+                changeSeqNumber(&linkNumber[fd].sequenceNumber);
+                state=3;
+            }
+            else{
+                state=0;
+                //manda erro
+            }
+            break;
+        case 3:
+            if((A^C)==aux){
+                state=4;
+            }
+            else{
+                state=0;
+                //manda erro
+            }
+            break;
+        case 4:
+            if(aux!=0x7e)
+                data[i++]=aux;
+            else flagReached=true;
+            break;
         }
     }
 
     size = byteDeStuff(data,i);
-printf("YOYOYOYOYO %x %x %x %x\n",data[0],data[1],data[2],data[3]);
     bcc2=getBCC2(data,size-1);
 
-    if(bcc2==data[size]){
+    if(bcc2==data[size-1]){
         memcpy(buffer,data,size-1);
     }
     else{
@@ -436,32 +430,32 @@ int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket)
 
 int byteDeStuff(unsigned char* data, int size) {
 
-  char aux[size];
+    char aux[size];
 
-  memcpy(aux,data,size);
+    memcpy(aux,data,size);
 
-  int finalSize=0;
-  int sum = 0;
+    int finalSize=0;
+    int sum = 0;
 
 
-  for(int i = 0; i < size; i++){
+    for(int i = 0; i < size; i++){
 
-    if(aux[i] == 0x7d && i+1<size) {
-        if(aux[i+1] == 0x5d){
-            data[finalSize]=0x7d;
+        if(aux[i] == 0x7d && i+1<size) {
+            if(aux[i+1] == 0x5d){
+                data[finalSize]=0x7d;
+            }
+            else if(aux[i+1] == 0x5e){
+                data[finalSize]=0x7e;
+            }
+            finalSize ++;
+            i++;
+            sum++;
         }
-        else if(aux[i+1] == 0x5e){
-            data[finalSize]=0x7e;
+        else{
+            data[finalSize] = aux[i];
+            finalSize++;
         }
-      finalSize ++;
-      i++;
-      sum++;
     }
-    else{
-      data[finalSize] = aux[i];
-      finalSize++;
-    }
-  }
-  //printf("DESTUFF %d\n",sum);
-  return finalSize;
+    //printf("DESTUFF %d\n",sum);
+    return finalSize;
 }

@@ -112,7 +112,7 @@ int receiveFile(int linkLayerNumber)
         }
         else if (packetType == CONTROL)
         {
-            fd = open("coninhas.gif", O_RDWR | O_NOCTTY | O_CREAT);
+            fd = open("coninhas", O_RDWR | O_NOCTTY | O_CREAT,0777);
         }
     }
 }
