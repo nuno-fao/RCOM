@@ -262,11 +262,13 @@ int llclose(int linkLayerNumber)
     else if (global_flag == RECEIVER)
     {
         send_receive(&linkNumber[linkLayerNumber], UA, DISC);
+        
     }
     else
     {
         return -1;
     }
+    close(linkNumber[linkLayerNumber].fd);
     return 0;
 }
 
@@ -330,6 +332,7 @@ int llread(int fd, uint8_t *buffer)
     unsigned char data[TRAMA_SIZE*2+5];
     unsigned char answer[5];
     bool erro=false;
+    bool duplicado=false;
     int state = 0;
     int i=0;
     int size;
@@ -365,7 +368,7 @@ int llread(int fd, uint8_t *buffer)
                     state=3;
                 }
                 else{
-                    erro=true;
+                    duplicado=true;
                 }
                 break;
             case 3:
@@ -396,8 +399,10 @@ int llread(int fd, uint8_t *buffer)
         if(erro==false){
             setHeader(FLAG,SNDR_COMMAND,RR,answer);
             write(linkNumber[fd].fd,answer,5);
-            memcpy(buffer,data,size-1);
+            if(!duplicado){
+                memcpy(buffer,data,size-1);
 
+            }
             return size-1;
         }
         else{

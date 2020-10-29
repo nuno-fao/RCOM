@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         {
             sendFile(linkLayerNumber, file);
         }
-        //llclose(linkLayerNumber);
+        llclose(linkLayerNumber);
     }
     else
     {
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         {
             receiveFile(linkLayerNumber);
         }
-        //llclose(linkLayerNumber);
+        llclose(linkLayerNumber);
     }
 }
 
