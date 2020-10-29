@@ -9,6 +9,7 @@
 #include <string.h>
 #include <signal.h>
 #include <stdint.h>
+#include <sys/time.h>
 
 int receive(linkLayer *linkLayer, char expected);
 void changeSeqNumber(unsigned int *seqNumber);
@@ -65,6 +66,10 @@ int send_receive(linkLayer *linkLayer, char expected, char send)
     (void)signal(SIGALRM, atende);
     setHeader(FLAG, ADDRESS, send, sendChar);
     write(linkLayer->fd, sendChar, 5);
+    
+      struct timeval start, end;
+  gettimeofday(&start, NULL);
+    
     while (conta <= linkLayer->numTransmissions)
     {
         int revc = receive(linkLayer, expected);
@@ -78,8 +83,18 @@ int send_receive(linkLayer *linkLayer, char expected, char send)
             //printf("Flag %d %d\n", flag, conta);
             write(linkLayer->fd, sendChar, 5);
             alarm(linkLayer->timeout);
+            if(conta>1)
+    		printf("Resending Info\n");
         }
     }
+    
+      gettimeofday(&end, NULL);
+  printf("Time taken to count to 10^5 is : %ld micro seconds\n",
+    ((end.tv_sec * 1000000 + end.tv_usec) -
+    (start.tv_sec * 1000000 + start.tv_usec)));
+    
+    if(conta>linkLayer->numTransmissions)
+    	return -1;
     return 0;
 }
 
@@ -203,17 +218,19 @@ int llopen(int porta, deviceType flag)
 
     if (flag == TRANSMITTER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B115200, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B38400, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
+           
         if (send_receive(&linkNumber[linkLayerNumber], UA, SET))
         {
+        	return -1;
         }
     }
     else if (flag == RECEIVER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B115200, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B38400, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -275,6 +292,8 @@ int llwrite(int fd, unsigned char *buffer, int length)
 
     write(linkNumber[fd].fd,stuffedPacket,length+5);
     
+    read(linkNumber[fd].fd,stuffedPacket,1);
+    
     free(packet);
     free(stuffedPacket);
     return 1;
@@ -305,7 +324,6 @@ int llread(int fd, uint8_t *buffer)
     while(!flagReached){
         int r = read(linkNumber[fd].fd, &aux, 1);
         if(r == 0){
-        	perror("MERDA");
         	continue;
         	}
         switch(state){
@@ -360,6 +378,7 @@ int llread(int fd, uint8_t *buffer)
     else{
         //erro
     }
+    write(linkNumber[fd].fd,"o",1);
     memcpy(buffer,data,size-1);
 
     return size-1;

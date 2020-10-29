@@ -11,7 +11,7 @@
 int main(int argc, char *argv[])
 {
     int arg = atoi(argv[1]);
-    char *file = "./img/pinguim.gif";
+    char *file = "./img/video.webm";
     if (arg == 0)
     {
         int linkLayerNumber = llopen(10, TRANSMITTER);
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         {
             sendFile(linkLayerNumber, file);
         }
-        llclose(linkLayerNumber);
+        //llclose(linkLayerNumber);
     }
     else
     {
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         {
             receiveFile(linkLayerNumber);
         }
-        llclose(linkLayerNumber);
+        //llclose(linkLayerNumber);
     }
 }
 
