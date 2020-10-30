@@ -17,7 +17,6 @@ int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket);
 int byteDeStuff(unsigned char* data, int size);
 uint8_t getBCC2(uint8_t *packet, int length);
 int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C);
-int infoDePack(u_int8_t *packet,int *length,uint8_t *A,uint8_t *C);
 
 int flag = 1, conta = 1;
 deviceType global_flag;
@@ -263,11 +262,13 @@ int llclose(int linkLayerNumber)
     else if (global_flag == RECEIVER)
     {
         send_receive(&linkNumber[linkLayerNumber], UA, DISC);
+        
     }
     else
     {
         return -1;
     }
+    close(linkNumber[linkLayerNumber].fd);
     return 0;
 }
 
@@ -278,6 +279,7 @@ int llwrite(int fd, unsigned char *buffer, int length)
     uint8_t *packet = malloc(length + 1);
     uint8_t *stuffedPacket = malloc((length + 1) * 2 + 5);
     int u = buffer[0];
+    int tries = 0;
 
     memcpy(packet, buffer, length);
     packet[length] = getBCC2(packet,length);
@@ -290,13 +292,25 @@ int llwrite(int fd, unsigned char *buffer, int length)
     }
     changeSeqNumber(&linkNumber[fd].sequenceNumber);
 
-    write(linkNumber[fd].fd,stuffedPacket,length+5);
-    
-    read(linkNumber[fd].fd,stuffedPacket,1);
-    
+    while(tries<=linkNumber[fd].numTransmissions){
+
+        write(linkNumber[fd].fd,stuffedPacket,length+5);
+        tries++;
+        
+        while(1){
+            int r = read(linkNumber[fd].fd,stuffedPacket,5);
+            if(r == 5) break;
+        }
+        
+        if(stuffedPacket[2]==RR){
+            free(packet);
+            free(stuffedPacket);
+            return 1;
+        }
+    }
     free(packet);
     free(stuffedPacket);
-    return 1;
+    return -1;
 }
 
 uint8_t getBCC2(uint8_t *packet, int length)
@@ -316,73 +330,90 @@ int llread(int fd, uint8_t *buffer)
     unsigned char aux;
     unsigned char bcc2;
     unsigned char data[TRAMA_SIZE*2+5];
+    unsigned char answer[5];
+    bool erro=false;
+    bool duplicado=false;
     int state = 0;
     int i=0;
     int size;
+    int tries=0;
     bool flagReached=false;
 
-    while(!flagReached){
-        int r = read(linkNumber[fd].fd, &aux, 1);
-        if(r == 0){
-        	continue;
-        	}
-        switch(state){
-        case 0:
-            if(aux==FLAG){
-                state=1;
+    while(tries<=linkNumber[fd].numTransmissions){
+
+        while(!flagReached){
+            int r = read(linkNumber[fd].fd, &aux, 1);
+            if(r == 0){
+                continue;
+                }
+            switch(state){
+            case 0:
+                if(aux==FLAG){
+                    state=1;
+                }
+                break;
+            case 1:
+                if(aux==SNDR_COMMAND){
+                    A=aux;
+                    state=2;
+                }
+                else{
+                    erro=true;
+                }
+                break;
+            case 2:
+                if(linkNumber[fd].sequenceNumber==aux){
+                    C=aux;
+                    changeSeqNumber(&linkNumber[fd].sequenceNumber);
+                    state=3;
+                }
+                else{
+                    duplicado=true;
+                }
+                break;
+            case 3:
+                if((A^C)==aux){
+                    state=4;
+                }
+                else{
+                    erro=true;
+                }
+                break;
+            case 4:
+                if(aux!=0x7e)
+                    data[i++]=aux;
+                else flagReached=true;
+                break;
             }
-            break;
-        case 1:
-            if(aux==SNDR_COMMAND){
-                A=aux;
-                state=2;
+        }
+
+        size = byteDeStuff(data,i);
+        bcc2=getBCC2(data,size-1);
+
+        if(bcc2!=data[size-1]){
+            erro=true;
+        }
+
+        tries++;
+        
+        if(erro==false){
+            setHeader(FLAG,SNDR_COMMAND,RR,answer);
+            write(linkNumber[fd].fd,answer,5);
+            if(!duplicado){
+                memcpy(buffer,data,size-1);
+
             }
-            else{
-                state=0;
-                //manda erro
-            }
-            break;
-        case 2:
-            if(linkNumber[fd].sequenceNumber==aux){
-                C=aux;
-                changeSeqNumber(&linkNumber[fd].sequenceNumber);
-                state=3;
-            }
-            else{
-                state=0;
-                //manda erro
-            }
-            break;
-        case 3:
-            if((A^C)==aux){
-                state=4;
-            }
-            else{
-                state=0;
-                //manda erro
-            }
-            break;
-        case 4:
-            if(aux!=0x7e)
-                data[i++]=aux;
-            else flagReached=true;
-            break;
+            return size-1;
+        }
+        else{
+            setHeader(FLAG,SNDR_COMMAND,REJ,answer);
+            write(linkNumber[fd].fd,answer,5);
+            erro=false;
         }
     }
 
-    size = byteDeStuff(data,i);
-    bcc2=getBCC2(data,size-1);
-
-    if(bcc2==data[size-1]){
-    }
-    else{
-        //erro
-    }
-    write(linkNumber[fd].fd,"o",1);
-    memcpy(buffer,data,size-1);
-
-    return size-1;
-
+    return -1;
+    
 }
 
 int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C)
@@ -394,11 +425,6 @@ int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char
 
     packet[length + 4] = FLAG;
     return 0;
-}
-
-int infoDePack(u_int8_t *packet,int *length,uint8_t *A,uint8_t *C){
-    *A =  packet[1];
-    *C =  packet[2];
 }
 
 void changeSeqNumber(unsigned int *seqNumber)

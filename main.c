@@ -12,7 +12,7 @@
 int main(int argc, char *argv[])
 {
     int arg = atoi(argv[1]);
-    char *file = "./img/video.webm";
+    char *file = "./img/pinguim.gif";
     if (arg == 0)
     {
         int linkLayerNumber = llopen(10, TRANSMITTER);
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
         {
             sendFile(linkLayerNumber, file);
         }
-        //llclose(linkLayerNumber);
+        llclose(linkLayerNumber);
     }
     else
     {
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
         {
             receiveFile(linkLayerNumber);
         }
-        //llclose(linkLayerNumber);
+        llclose(linkLayerNumber);
     }
 }
 
@@ -106,6 +106,7 @@ int receiveFile(int linkLayerNumber)
     {   
         if ((dataSize = llread(linkLayerNumber, buffer)) < 0)
         {
+            return -1;
         }
         readPacket(buffer, dataSize, &packetType, &packet);
         if (packetType == CONTROL && packet.c.end)
