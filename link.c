@@ -218,7 +218,7 @@ int llopen(int porta, deviceType flag)
 
     if (flag == TRANSMITTER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B38400, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B115200, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -230,7 +230,7 @@ int llopen(int porta, deviceType flag)
     }
     else if (flag == RECEIVER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B38400, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B115200, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;

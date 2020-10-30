@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <time.h>
 
 int main(int argc, char *argv[])
 {
@@ -92,8 +93,15 @@ int receiveFile(int linkLayerNumber)
     unsigned char buffer[TRAMA_SIZE+4];
     int dataSize;
     int fd;
+
+
+
     packetType packetType = -1;
     packet_u packet;
+    float acumSize = 0;
+    float totalSize = 0;
+    float lastP = 0;
+    unsigned long iniTime = time(NULL);
     while (1)
     {   
         if ((dataSize = llread(linkLayerNumber, buffer)) < 0)
@@ -104,13 +112,24 @@ int receiveFile(int linkLayerNumber)
         {
             break;
         }
-        if (packetType == DATA)
+        else if (packetType == DATA)
         {
+            acumSize+=(dataSize-4);
+            if(acumSize/totalSize*100 >lastP){
+    		unsigned long curTime = time(NULL);
+            	float rest = (totalSize-acumSize)*(curTime-iniTime)/acumSize;
+		unsigned long acumTime = curTime - iniTime;
+            	printf("Tempo Restante: %fs\n",rest);
+            	printf("Tempo Decorrido: %lds\n",acumTime);
+		printf("Percentagem: %f%%\n\n",lastP);
+            	lastP=(int)(acumSize/totalSize*100)+1;
+            }
             dataPacket_s *dataPacket = &(packet.d);
             write(fd,dataPacket->data,dataPacket->dataSize);
         }
         else if (packetType == CONTROL)
         {
+            totalSize = *packet.c.fileSize;
             fd = open("coninhas", O_RDWR | O_NOCTTY | O_CREAT,0777);
         }
     }
@@ -215,3 +234,4 @@ void dataPacket(unsigned char *packet, int sequenceNumber, int size)
     packet[3] = (uint8_t)(size % 256);
     return;
 }
+
