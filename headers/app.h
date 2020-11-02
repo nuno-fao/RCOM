@@ -25,5 +25,5 @@ typedef enum packetType{
 int sendFile(int linkLayerNumber, char *file);
 void controlPacket(unsigned char controlByte, unsigned char *packet, int* length, char *file);
 void dataPacket(unsigned char *packet, int sequenceNumber, int size);
-int receiveFile(int linkLayerNumber);
+int receiveFile(int linkLayerNumber,char *file);
 int readPacket(unsigned char *data, int dataSize, packetType *packetType, packet_u *packet);

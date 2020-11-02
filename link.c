@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <termios.h>
 #include <stdbool.h>
 #include <string.h>
 #include <signal.h>
@@ -219,7 +218,7 @@ int llopen(int porta, deviceType flag)
 
     if (flag == TRANSMITTER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B115200, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, BAUDRATE, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -231,7 +230,7 @@ int llopen(int porta, deviceType flag)
     }
     else if (flag == RECEIVER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, B115200, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, BAUDRATE, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -247,6 +246,7 @@ int llopen(int porta, deviceType flag)
     {
         return -1;
     }
+    linkNumber[linkLayerNumber].oltio = oldtio;
     /*resetTermIO(&oldtio,linkNumber[linkLayerNumber].fd);
     close(linkNumber[linkLayerNumber].fd);*/
     return linkLayerNumber;
@@ -269,6 +269,7 @@ int llclose(int linkLayerNumber)
     {
         return -1;
     }
+    resetTermIO(&linkNumber[linkLayerNumber].oltio,linkNumber[linkLayerNumber].fd);
     close(linkNumber[linkLayerNumber].fd);
     return 0;
 }
@@ -305,8 +306,6 @@ int llwrite(int fd, unsigned char *buffer, int length)
     {
 
         int r = read(linkNumber[fd].fd, answer, 5);
-        if (r > 0)
-            printf("%i   \n", r);
         if (r == 5 && answer[2] == RR)
         {
             free(packet);
@@ -318,6 +317,7 @@ int llwrite(int fd, unsigned char *buffer, int length)
             write(linkNumber[fd].fd, stuffedPacket, length + 5);
             alarm(linkNumber[fd].timeout);
             printf("Sent another time\n");
+            conta = 1;
         }
         else if (flag && conta <= linkNumber[fd].numTransmissions)
         {
@@ -349,7 +349,9 @@ int llread(int fd, uint8_t *buffer)
     unsigned char C;
     unsigned char aux;
     unsigned char bcc2;
-    unsigned char data[TRAMA_SIZE * 2 + 5];
+    int space = TRAMA_SIZE;
+    if(space<30) space = 30;
+    unsigned char data[space * 2 + 5];
     unsigned char answer[5];
     bool erro = false;
     bool duplicado = false;
@@ -433,22 +435,19 @@ int llread(int fd, uint8_t *buffer)
 
         size = byteDeStuff(data, i);
 
-        var_erro++;
         bcc2 = getBCC2(data, size - 1);
-        if (var_erro%10 == 0)
+        if (rand()%10 == 0){
             bcc2 = 0x01;
+            perror("alright alright\n");
+        }
 
         if (bcc2 != data[size - 1])
         {
-            printf("merda yo\n");
             erro = true;
         }
 
-        tries++;
-
         if (erro == false)
         {
-            printf("entrei nesta parte afinal yo\n\n");
             setHeader(FLAG, SNDR_COMMAND, RR, answer);
             write(linkNumber[fd].fd, answer, 5);
             if (!duplicado)
@@ -460,7 +459,6 @@ int llread(int fd, uint8_t *buffer)
         }
         else
         {
-            printf("entrei aqui\n\n");
             setHeader(FLAG, SNDR_COMMAND, REJ, answer);
             write(linkNumber[fd].fd, answer, 5);
             erro = false;

@@ -1,4 +1,8 @@
 #include "macro.h"
+#include <termios.h>
+
+#define TRAMA_SIZE 256
+#define BAUDRATE 115200
 
 typedef enum flags
 {
@@ -15,6 +19,7 @@ typedef struct linkLayers
     unsigned int numTransmissions; /*Número de tentativas em caso def alha*/
     char frame[TRAMA_SIZE];               /*Trama*/
     int fd;
+    struct termios oltio;
 }linkLayer;
 typedef enum states{
     START = 0,

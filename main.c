@@ -12,26 +12,27 @@
 int main(int argc, char *argv[])
 {
     int arg = atoi(argv[1]);
-    char *file = "./img/pinguim.gif";
+    srand((unsigned) time(NULL));
+    
     if (arg == 0)
     {
-        int linkLayerNumber = llopen(10, TRANSMITTER);
+        int linkLayerNumber = llopen(atoi(argv[3]), TRANSMITTER);
         if (linkLayerNumber == -1)
             return -1;
         else
         {
-            sendFile(linkLayerNumber, file);
+            sendFile(linkLayerNumber, argv[2]);
         }
         llclose(linkLayerNumber);
     }
     else
     {
-        int linkLayerNumber = llopen(11, RECEIVER);
+        int linkLayerNumber = llopen(atoi(argv[3]), RECEIVER);
         if (linkLayerNumber == -1)
             return -1;
         else
         {
-            receiveFile(linkLayerNumber);
+            receiveFile(linkLayerNumber,argv[2]);
         }
         llclose(linkLayerNumber);
     }
@@ -41,6 +42,9 @@ int sendFile(int linkLayerNumber, char *file)
 {
 
     FILE *fd = fopen(file, "r");
+    if(fd==NULL){
+        perror("ERRO ao abrir o ficheiro");
+    }
     struct stat st;
     int size;
     int packetSize = 13 + strlen(file);
@@ -73,7 +77,6 @@ int sendFile(int linkLayerNumber, char *file)
         }
         for (int sequenceNumber = 0; sequenceNumber < localSize; sequenceNumber++)
         {
-            printf("ERRooo\n");
             readSize = fread(&dataPack[4], 1, TRAMA_SIZE, fd);
             dataPacket(dataPack, sequenceNumber % 255, readSize);
             if (llwrite(linkLayerNumber, dataPack, readSize + 4) == -1)
@@ -89,9 +92,11 @@ int sendFile(int linkLayerNumber, char *file)
     }
 }
 
-int receiveFile(int linkLayerNumber)
+int receiveFile(int linkLayerNumber,char *file)
 {
-    unsigned char buffer[TRAMA_SIZE + 4];
+    int space = TRAMA_SIZE;
+    if(space<30) space = 30;
+    unsigned char buffer[space + 4];
     int dataSize;
     int fd;
 
@@ -135,7 +140,7 @@ int receiveFile(int linkLayerNumber)
         else if (packetType == CONTROL)
         {
             totalSize = *packet.c.fileSize;
-            fd = open("coninhas", O_RDWR | O_NOCTTY | O_CREAT, 0777);
+            fd = open(file, O_RDWR | O_NOCTTY | O_CREAT, 0777);
         }
     }
 }
