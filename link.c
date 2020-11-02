@@ -59,15 +59,16 @@ void atende() // atende alarme
 
 int send_receive(linkLayer *linkLayer, char expected, char send)
 {
-    flag = 1;
     conta = 1;
     char sendChar[5];
     (void)signal(SIGALRM, atende);
     setHeader(FLAG, ADDRESS, send, sendChar);
     write(linkLayer->fd, sendChar, 5);
-    
-      struct timeval start, end;
-  gettimeofday(&start, NULL);
+    flag = 0;
+    alarm(linkLayer->timeout);
+
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
     
     while (conta <= linkLayer->numTransmissions)
     {
@@ -279,7 +280,9 @@ int llwrite(int fd, unsigned char *buffer, int length)
     uint8_t *packet = malloc(length + 1);
     uint8_t *stuffedPacket = malloc((length + 1) * 2 + 5);
     int u = buffer[0];
-    int tries = 0;
+    conta = 1;
+    flag=0;
+    (void)signal(SIGALRM, atende);
 
     memcpy(packet, buffer, length);
     packet[length] = getBCC2(packet,length);
@@ -292,20 +295,28 @@ int llwrite(int fd, unsigned char *buffer, int length)
     }
     changeSeqNumber(&linkNumber[fd].sequenceNumber);
 
-    while(tries<=linkNumber[fd].numTransmissions){
+    // conta<=linkNumber[fd].numTransmissions
+    write(linkNumber[fd].fd,stuffedPacket,length+5);
+    alarm(linkNumber[fd].timeout);
 
-        write(linkNumber[fd].fd,stuffedPacket,length+5);
-        tries++;
+    while(conta <= linkNumber[fd].numTransmissions){
         
-        while(1){
-            int r = read(linkNumber[fd].fd,stuffedPacket,5);
-            if(r == 5) break;
-        }
         
-        if(stuffedPacket[2]==RR){
+        int r = read(linkNumber[fd].fd,stuffedPacket,5);
+    if(r>0) printf("%i   \n",r);
+        if(r==5 && stuffedPacket[2]==RR){
             free(packet);
             free(stuffedPacket);
             return 1;
+        }
+
+        if (flag && conta <= linkNumber[fd].numTransmissions)
+        {
+            flag = 0;
+            //printf("Flag %d %d\n", flag, conta);
+            write(linkNumber[fd].fd,stuffedPacket,length+5);
+            alarm(linkNumber[fd].timeout);
+    		printf("Waiting for answer\n");
         }
     }
     free(packet);
@@ -365,11 +376,11 @@ int llread(int fd, uint8_t *buffer)
                 if(linkNumber[fd].sequenceNumber==aux){
                     C=aux;
                     changeSeqNumber(&linkNumber[fd].sequenceNumber);
-                    state=3;
                 }
                 else{
                     duplicado=true;
                 }
+                state=3;
                 break;
             case 3:
                 if((A^C)==aux){
@@ -401,9 +412,9 @@ int llread(int fd, uint8_t *buffer)
             write(linkNumber[fd].fd,answer,5);
             if(!duplicado){
                 memcpy(buffer,data,size-1);
-
+                return size-1;
             }
-            return size-1;
+            return 0;
         }
         else{
             setHeader(FLAG,SNDR_COMMAND,REJ,answer);

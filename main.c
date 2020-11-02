@@ -108,6 +108,9 @@ int receiveFile(int linkLayerNumber)
         {
             return -1;
         }
+        if(dataSize==0){
+            continue;
+        }
         readPacket(buffer, dataSize, &packetType, &packet);
         if (packetType == CONTROL && packet.c.end)
         {
