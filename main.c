@@ -73,6 +73,7 @@ int sendFile(int linkLayerNumber, char *file)
         }
         for (int sequenceNumber = 0; sequenceNumber < localSize; sequenceNumber++)
         {
+            printf("ERRooo\n");
             readSize = fread(&dataPack[4], 1, TRAMA_SIZE, fd);
             dataPacket(dataPack, sequenceNumber % 255, readSize);
             if (llwrite(linkLayerNumber, dataPack, readSize + 4) == -1)
@@ -90,11 +91,9 @@ int sendFile(int linkLayerNumber, char *file)
 
 int receiveFile(int linkLayerNumber)
 {
-    unsigned char buffer[TRAMA_SIZE+4];
+    unsigned char buffer[TRAMA_SIZE + 4];
     int dataSize;
     int fd;
-
-
 
     packetType packetType = -1;
     packet_u packet;
@@ -103,12 +102,13 @@ int receiveFile(int linkLayerNumber)
     float lastP = 0;
     unsigned long iniTime = time(NULL);
     while (1)
-    {   
+    {
         if ((dataSize = llread(linkLayerNumber, buffer)) < 0)
         {
             return -1;
         }
-        if(dataSize==0){
+        if (dataSize == 0)
+        {
             continue;
         }
         readPacket(buffer, dataSize, &packetType, &packet);
@@ -118,23 +118,24 @@ int receiveFile(int linkLayerNumber)
         }
         else if (packetType == DATA)
         {
-            acumSize+=(dataSize-4);
-            if(acumSize/totalSize*100 >lastP){
-    		unsigned long curTime = time(NULL);
-            	float rest = (totalSize-acumSize)*(curTime-iniTime)/acumSize;
-		unsigned long acumTime = curTime - iniTime;
-            	printf("Tempo Restante: %fs\n",rest);
-            	printf("Tempo Decorrido: %lds\n",acumTime);
-		printf("Percentagem: %f%%\n\n",lastP);
-            	lastP=(int)(acumSize/totalSize*100)+1;
+            acumSize += (dataSize - 4);
+            if (acumSize / totalSize * 100 > lastP)
+            {
+                unsigned long curTime = time(NULL);
+                float rest = (totalSize - acumSize) * (curTime - iniTime) / acumSize;
+                unsigned long acumTime = curTime - iniTime;
+                printf("Tempo Restante: %fs\n", rest);
+                printf("Tempo Decorrido: %lds\n", acumTime);
+                printf("Percentagem: %f%%\n\n", lastP);
+                lastP = (int)(acumSize / totalSize * 100) + 1;
             }
             dataPacket_s *dataPacket = &(packet.d);
-            write(fd,dataPacket->data,dataPacket->dataSize);
+            write(fd, dataPacket->data, dataPacket->dataSize);
         }
         else if (packetType == CONTROL)
         {
             totalSize = *packet.c.fileSize;
-            fd = open("coninhas", O_RDWR | O_NOCTTY | O_CREAT,0777);
+            fd = open("coninhas", O_RDWR | O_NOCTTY | O_CREAT, 0777);
         }
     }
 }
@@ -238,4 +239,3 @@ void dataPacket(unsigned char *packet, int sequenceNumber, int size)
     packet[3] = (uint8_t)(size % 256);
     return;
 }
-

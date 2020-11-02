@@ -14,7 +14,7 @@
 int receive(linkLayer *linkLayer, char expected);
 void changeSeqNumber(unsigned int *seqNumber);
 int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket);
-int byteDeStuff(unsigned char* data, int size);
+int byteDeStuff(unsigned char *data, int size);
 uint8_t getBCC2(uint8_t *packet, int length);
 int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C);
 
@@ -31,7 +31,8 @@ void *getPointer(void *pointer)
 {
     dataSize;
     dataSizeCounter;
-    if(dataSize == 0){
+    if (dataSize == 0)
+    {
         dataSize = 16;
         return malloc(16);
     }
@@ -69,7 +70,7 @@ int send_receive(linkLayer *linkLayer, char expected, char send)
 
     struct timeval start, end;
     gettimeofday(&start, NULL);
-    
+
     while (conta <= linkLayer->numTransmissions)
     {
         int revc = receive(linkLayer, expected);
@@ -83,18 +84,18 @@ int send_receive(linkLayer *linkLayer, char expected, char send)
             //printf("Flag %d %d\n", flag, conta);
             write(linkLayer->fd, sendChar, 5);
             alarm(linkLayer->timeout);
-            if(conta>1)
-    		printf("Resending Info\n");
+            if (conta > 1)
+                printf("Resending Info\n");
         }
     }
-    
-      gettimeofday(&end, NULL);
-  printf("Time taken to count to 10^5 is : %ld micro seconds\n",
-    ((end.tv_sec * 1000000 + end.tv_usec) -
-    (start.tv_sec * 1000000 + start.tv_usec)));
-    
-    if(conta>linkLayer->numTransmissions)
-    	return -1;
+
+    gettimeofday(&end, NULL);
+    printf("Time taken to count to 10^5 is : %ld micro seconds\n",
+           ((end.tv_sec * 1000000 + end.tv_usec) -
+            (start.tv_sec * 1000000 + start.tv_usec)));
+
+    if (conta > linkLayer->numTransmissions)
+        return -1;
     return 0;
 }
 
@@ -222,10 +223,10 @@ int llopen(int porta, deviceType flag)
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
-           
+
         if (send_receive(&linkNumber[linkLayerNumber], UA, SET))
         {
-        	return -1;
+            return -1;
         }
     }
     else if (flag == RECEIVER)
@@ -263,7 +264,6 @@ int llclose(int linkLayerNumber)
     else if (global_flag == RECEIVER)
     {
         send_receive(&linkNumber[linkLayerNumber], UA, DISC);
-        
     }
     else
     {
@@ -280,49 +280,52 @@ int llwrite(int fd, unsigned char *buffer, int length)
     uint8_t *stuffedPacket = malloc((length + 1) * 2 + 5);
     int u = buffer[0];
     conta = 1;
-    flag=0;
+    flag = 0;
     (void)signal(SIGALRM, atende);
 
     memcpy(packet, buffer, length);
 
-    packet[length] = getBCC2(packet,length);
+    packet[length] = getBCC2(packet, length);
 
     length++;
     //printf("%d\n",length);
-    length = byteStuff(packet, length , &stuffedPacket[4]);
-    
+    length = byteStuff(packet, length, &stuffedPacket[4]);
+
     if (infoPacket(stuffedPacket, length, SNDR_COMMAND, linkNumber[fd].sequenceNumber))
     {
     }
     changeSeqNumber(&linkNumber[fd].sequenceNumber);
 
     // conta<=linkNumber[fd].numTransmissions
-    write(linkNumber[fd].fd,stuffedPacket,length+5);
+    write(linkNumber[fd].fd, stuffedPacket, length + 5);
     alarm(linkNumber[fd].timeout);
+    unsigned char answer[5];
 
-    while(conta <= linkNumber[fd].numTransmissions){
-        
-        
-        int r = read(linkNumber[fd].fd,stuffedPacket,5);
-    if(r>0) printf("%i   \n",r);
-        if(r==5 && stuffedPacket[2]==RR){
+    while (conta <= linkNumber[fd].numTransmissions)
+    {
+
+        int r = read(linkNumber[fd].fd, answer, 5);
+        if (r > 0)
+            printf("%i   \n", r);
+        if (r == 5 && answer[2] == RR)
+        {
             free(packet);
             free(stuffedPacket);
             return 1;
         }
-        else if(r==5){
-            printf("recebi rej\n");
-            write(linkNumber[fd].fd,stuffedPacket,length+5);
-            continue;
+        if (r == 5 && answer[2] == REJ)
+        {
+            write(linkNumber[fd].fd, stuffedPacket, length + 5);
+            alarm(linkNumber[fd].timeout);
+            printf("Sent another time\n");
         }
-
-        if (flag && conta <= linkNumber[fd].numTransmissions)
+        else if (flag && conta <= linkNumber[fd].numTransmissions)
         {
             flag = 0;
             //printf("Flag %d %d\n", flag, conta);
-            write(linkNumber[fd].fd,stuffedPacket,length+5);
+            write(linkNumber[fd].fd, stuffedPacket, length + 5);
             alarm(linkNumber[fd].timeout);
-    		printf("Waiting for answer\n");
+            printf("Waiting for answer\n");
         }
     }
     free(packet);
@@ -340,116 +343,134 @@ uint8_t getBCC2(uint8_t *packet, int length)
     return bcc2;
 }
 
-
-int var_erro = 1;
-
 int llread(int fd, uint8_t *buffer)
 {
     unsigned char A;
     unsigned char C;
     unsigned char aux;
     unsigned char bcc2;
-    unsigned char data[TRAMA_SIZE*2+5];
+    unsigned char data[TRAMA_SIZE * 2 + 5];
     unsigned char answer[5];
-    bool erro=false;
-    bool duplicado=false;
+    bool erro = false;
+    bool duplicado = false;
     int state = 0;
-    int i=0;
+    int i = 0;
     int size;
-    int tries=0;
-    bool flagReached=false;
+    int tries = 0;
+    bool flagReached = false;
 
-    while(tries<=linkNumber[fd].numTransmissions){
+    while (tries <= linkNumber[fd].numTransmissions)
+    {
 
-        while(!flagReached){
+        while (!flagReached)
+        {
             int r = read(linkNumber[fd].fd, &aux, 1);
-            
-            if(r == 0){
+
+            if (r == 0)
+            {
                 continue;
-                }
-            switch(state){
+            }
+            switch (state)
+            {
             case 0:
-                if(aux==FLAG){
-                    state=1;
+                if (aux == FLAG)
+                {
+                    state = 1;
                 }
                 break;
             case 1:
-                if(aux==SNDR_COMMAND){
-                    A=aux;
-                    state=2;
+                if (aux == SNDR_COMMAND)
+                {
+                    A = aux;
+                    state = 2;
                 }
-                else{
-                    erro=true;
-                    if(aux==FLAG) state=1;
-                    else state=0;
+                else
+                {
+                    erro = true;
+                    if (aux == FLAG)
+                        state = 1;
+                    else
+                        state = 0;
                 }
                 break;
             case 2:
-                if(linkNumber[fd].sequenceNumber==aux){
-                    C=aux;
+                if (linkNumber[fd].sequenceNumber == aux)
+                {
+                    C = aux;
                     changeSeqNumber(&linkNumber[fd].sequenceNumber);
                 }
-                else{
-                    duplicado=true;
+                else
+                {
+                    duplicado = true;
                 }
-                state=3;
+                state = 3;
                 break;
             case 3:
-                if((A^C)==aux){
-                    state=4;
+                if ((A ^ C) == aux)
+                {
+                    state = 4;
                 }
-                else{
-                    erro=true;
-                    if(aux==FLAG) state=1;
-                    else state=0;
+                else
+                {
+                    erro = true;
+                    if (aux == FLAG)
+                        state = 1;
+                    else
+                        state = 0;
                 }
                 break;
             case 4:
-                if(aux!=0x7e)
-                    data[i++]=aux;
-                else {
-                    flagReached=true;
-                    state=0;
+                if (aux != 0x7e)
+                    data[i++] = aux;
+                else
+                {
+                    flagReached = true;
+                    state = 0;
                 }
                 break;
             }
         }
 
-        size = byteDeStuff(data,i);
-
+        size = byteDeStuff(data, i);
 
         var_erro++;
-        bcc2=getBCC2(data,size-1);
-        //if(var_erro%3==0) bcc2=0x01;
+        bcc2 = getBCC2(data, size - 1);
+        if (var_erro%10 == 0)
+            bcc2 = 0x01;
 
-        if(bcc2!=data[size-1]){
+        if (bcc2 != data[size - 1])
+        {
             printf("merda yo\n");
-            erro=true;
+            erro = true;
         }
 
         tries++;
-        
-        if(erro==false){
-            printf("entrei nesta parte afinal yo\n");
-            setHeader(FLAG,SNDR_COMMAND,RR,answer);
-            write(linkNumber[fd].fd,answer,5);
-            if(!duplicado){
-                memcpy(buffer,data,size-1);
-                return size-1;
+
+        if (erro == false)
+        {
+            printf("entrei nesta parte afinal yo\n\n");
+            setHeader(FLAG, SNDR_COMMAND, RR, answer);
+            write(linkNumber[fd].fd, answer, 5);
+            if (!duplicado)
+            {
+                memcpy(buffer, data, size - 1);
+                return size - 1;
             }
             return 0;
         }
-        else{
-            printf("entrei aqui\n");
-            setHeader(FLAG,SNDR_COMMAND,REJ,answer);
-            write(linkNumber[fd].fd,answer,5);
-            erro=false;
-            flagReached=false;
+        else
+        {
+            printf("entrei aqui\n\n");
+            setHeader(FLAG, SNDR_COMMAND, REJ, answer);
+            write(linkNumber[fd].fd, answer, 5);
+            erro = false;
+            i=0;
+            changeSeqNumber(&linkNumber[fd].sequenceNumber);
+            flagReached = false;
         }
     }
 
     return -1;
-    
 }
 
 int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C)
@@ -496,31 +517,35 @@ int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket)
     return l;
 }
 
-
-int byteDeStuff(unsigned char *data, int size) {
+int byteDeStuff(unsigned char *data, int size)
+{
 
     char aux[size];
 
-    memcpy(aux,data,size);
+    memcpy(aux, data, size);
 
-    int finalSize=0;
+    int finalSize = 0;
     int sum = 0;
 
+    for (int i = 0; i < size; i++)
+    {
 
-    for(int i = 0; i < size; i++){
-
-        if(aux[i] == 0x7d && i+1<size) {
-            if(aux[i+1] == 0x5d){
-                data[finalSize]=0x7d;
+        if (aux[i] == 0x7d && i + 1 < size)
+        {
+            if (aux[i + 1] == 0x5d)
+            {
+                data[finalSize] = 0x7d;
             }
-            else if(aux[i+1] == 0x5e){
-                data[finalSize]=0x7e;
+            else if (aux[i + 1] == 0x5e)
+            {
+                data[finalSize] = 0x7e;
             }
-            finalSize ++;
+            finalSize++;
             i++;
             sum++;
         }
-        else{
+        else
+        {
             data[finalSize] = aux[i];
             finalSize++;
         }
