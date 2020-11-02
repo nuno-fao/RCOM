@@ -274,7 +274,6 @@ int llclose(int linkLayerNumber)
 }
 
 int s = 0;
-
 int llwrite(int fd, unsigned char *buffer, int length)
 {
     uint8_t *packet = malloc(length + 1);
@@ -285,7 +284,9 @@ int llwrite(int fd, unsigned char *buffer, int length)
     (void)signal(SIGALRM, atende);
 
     memcpy(packet, buffer, length);
+
     packet[length] = getBCC2(packet,length);
+
     length++;
     //printf("%d\n",length);
     length = byteStuff(packet, length , &stuffedPacket[4]);
@@ -308,6 +309,11 @@ int llwrite(int fd, unsigned char *buffer, int length)
             free(packet);
             free(stuffedPacket);
             return 1;
+        }
+        else if(r==5){
+            printf("recebi rej\n");
+            write(linkNumber[fd].fd,stuffedPacket,length+5);
+            continue;
         }
 
         if (flag && conta <= linkNumber[fd].numTransmissions)
@@ -334,6 +340,9 @@ uint8_t getBCC2(uint8_t *packet, int length)
     return bcc2;
 }
 
+
+int var_erro = 1;
+
 int llread(int fd, uint8_t *buffer)
 {
     unsigned char A;
@@ -354,6 +363,7 @@ int llread(int fd, uint8_t *buffer)
 
         while(!flagReached){
             int r = read(linkNumber[fd].fd, &aux, 1);
+            
             if(r == 0){
                 continue;
                 }
@@ -370,6 +380,8 @@ int llread(int fd, uint8_t *buffer)
                 }
                 else{
                     erro=true;
+                    if(aux==FLAG) state=1;
+                    else state=0;
                 }
                 break;
             case 2:
@@ -388,26 +400,37 @@ int llread(int fd, uint8_t *buffer)
                 }
                 else{
                     erro=true;
+                    if(aux==FLAG) state=1;
+                    else state=0;
                 }
                 break;
             case 4:
                 if(aux!=0x7e)
                     data[i++]=aux;
-                else flagReached=true;
+                else {
+                    flagReached=true;
+                    state=0;
+                }
                 break;
             }
         }
 
         size = byteDeStuff(data,i);
+
+
+        var_erro++;
         bcc2=getBCC2(data,size-1);
+        //if(var_erro%3==0) bcc2=0x01;
 
         if(bcc2!=data[size-1]){
+            printf("merda yo\n");
             erro=true;
         }
 
         tries++;
         
         if(erro==false){
+            printf("entrei nesta parte afinal yo\n");
             setHeader(FLAG,SNDR_COMMAND,RR,answer);
             write(linkNumber[fd].fd,answer,5);
             if(!duplicado){
@@ -417,9 +440,11 @@ int llread(int fd, uint8_t *buffer)
             return 0;
         }
         else{
+            printf("entrei aqui\n");
             setHeader(FLAG,SNDR_COMMAND,REJ,answer);
             write(linkNumber[fd].fd,answer,5);
             erro=false;
+            flagReached=false;
         }
     }
 
