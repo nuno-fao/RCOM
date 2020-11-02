@@ -26,6 +26,18 @@ int linkCounter = 0;
 int dataSize = 0;
 int dataSizeCounter = 0;
 
+int defaultBaudRate = 38400;
+int defaultTramaSize = 256;
+
+void setDefaultBaudRate(int rate){
+	defaultBaudRate = rate;
+}
+
+void setDefaultTramaSize(int size){
+	defaultTramaSize = size;
+}
+
+
 void *getPointer(void *pointer)
 {
     dataSize;
@@ -218,7 +230,7 @@ int llopen(int porta, deviceType flag)
 
     if (flag == TRANSMITTER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, BAUDRATE, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, defaultBaudRate, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -230,7 +242,7 @@ int llopen(int porta, deviceType flag)
     }
     else if (flag == RECEIVER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, BAUDRATE, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, defaultBaudRate, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -349,7 +361,7 @@ int llread(int fd, uint8_t *buffer)
     unsigned char C;
     unsigned char aux;
     unsigned char bcc2;
-    int space = TRAMA_SIZE;
+    int space = defaultTramaSize;
     if(space<30) space = 30;
     unsigned char data[space * 2 + 5];
     unsigned char answer[5];
@@ -436,7 +448,7 @@ int llread(int fd, uint8_t *buffer)
         size = byteDeStuff(data, i);
 
         bcc2 = getBCC2(data, size - 1);
-        if (rand()%10 == 0){
+        if (errorTest == 1 && rand()%10 == 0){
             bcc2 = 0x01;
             perror("alright alright\n");
         }

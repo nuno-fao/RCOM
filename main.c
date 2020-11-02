@@ -9,11 +9,21 @@
 #include <sys/stat.h>
 #include <time.h>
 
+int trama_size;
+
 int main(int argc, char *argv[])
 {
     int arg = atoi(argv[1]);
     srand((unsigned) time(NULL));
-    
+    if(argc>4){
+    	setDefaultBaudRate(atoi(argv[4]));
+    }
+    trama_size = 256;
+    if(argc>5){
+    	setDefaultTramaSize(atoi(argv[5]));
+    	trama_size = atoi(argv[5]);
+    }
+    	
     if (arg == 0)
     {
         int linkLayerNumber = llopen(atoi(argv[3]), TRANSMITTER);
@@ -49,7 +59,7 @@ int sendFile(int linkLayerNumber, char *file)
     int size;
     int packetSize = 13 + strlen(file);
     unsigned char CTRLPacket[packetSize];
-    unsigned char dataPack[TRAMA_SIZE + 4];
+    unsigned char dataPack[trama_size + 4];
 
     if (fd == NULL)
     {
@@ -69,15 +79,15 @@ int sendFile(int linkLayerNumber, char *file)
     else
     {
         int leftSize = size;
-        int localSize = size / TRAMA_SIZE;
+        int localSize = size / trama_size;
         int readSize;
-        if (size % TRAMA_SIZE > 0)
+        if (size % trama_size > 0)
         {
             localSize++;
         }
         for (int sequenceNumber = 0; sequenceNumber < localSize; sequenceNumber++)
         {
-            readSize = fread(&dataPack[4], 1, TRAMA_SIZE, fd);
+            readSize = fread(&dataPack[4], 1, trama_size, fd);
             dataPacket(dataPack, sequenceNumber % 255, readSize);
             if (llwrite(linkLayerNumber, dataPack, readSize + 4) == -1)
                 return -1;
@@ -94,7 +104,7 @@ int sendFile(int linkLayerNumber, char *file)
 
 int receiveFile(int linkLayerNumber,char *file)
 {
-    int space = TRAMA_SIZE;
+    int space = trama_size;
     if(space<30) space = 30;
     unsigned char buffer[space + 4];
     int dataSize;

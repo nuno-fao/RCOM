@@ -1,8 +1,7 @@
 #include "macro.h"
 #include <termios.h>
 
-#define TRAMA_SIZE 256
-#define BAUDRATE 115200
+#define errorTest 0
 
 typedef enum flags
 {
@@ -17,7 +16,6 @@ typedef struct linkLayers
     unsigned int sequenceNumber;   /*Número de sequência da trama: 0, 1*/
     unsigned int timeout;          /*Valor do temporizador: 1 s*/
     unsigned int numTransmissions; /*Número de tentativas em caso def alha*/
-    char frame[TRAMA_SIZE];               /*Trama*/
     int fd;
     struct termios oltio;
 }linkLayer;
@@ -30,6 +28,8 @@ typedef enum states{
     STOP = 5
 }state;
 
+void setDefaultBaudRate(int rate);
+void setDefaultTramaSize(int size);
 int llopen(int porta,deviceType flag);
 int llclose(int ll);
 int llwrite(int fd, unsigned char * buffer, int length);
