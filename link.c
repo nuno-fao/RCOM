@@ -1,4 +1,4 @@
-﻿#include "headers/link.h"
+#include "headers/link.h"
 #include "headers/macro.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,9 +89,9 @@ int send_receive(linkLayer *linkLayer, char expected, char send)
     }
 
     gettimeofday(&end, NULL);
-    printf("Time taken to count to 10^5 is : %ld micro seconds\n",
+    /*printf("Time taken to count to 10^5 is : %ld micro seconds\n",
            ((end.tv_sec * 1000000 + end.tv_usec) -
-            (start.tv_sec * 1000000 + start.tv_usec)));
+            (start.tv_sec * 1000000 + start.tv_usec)));*/
 
     if (conta > linkLayer->numTransmissions)
         return -1;
@@ -269,8 +269,8 @@ int llclose(int linkLayerNumber)
     {
         return -1;
     }
-    resetTermIO(&linkNumber[linkLayerNumber].oltio,linkNumber[linkLayerNumber].fd);
-    close(linkNumber[linkLayerNumber].fd);
+    //resetTermIO(&linkNumber[linkLayerNumber].oltio,linkNumber[linkLayerNumber].fd);
+    //close(linkNumber[linkLayerNumber].fd);
     return 0;
 }
 
@@ -551,3 +551,4 @@ int byteDeStuff(unsigned char *data, int size)
     //printf("DESTUFF %d\n",sum);
     return finalSize;
 }
+

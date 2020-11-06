@@ -61,6 +61,8 @@ int sendFile(int linkLayerNumber, char *file)
     size = st.st_size;
 
     controlPacket(CTRL_START, CTRLPacket, &size, file);
+    printf("FileName: %s\n",file);
+    printf("FileSize: %d\n",size);
 
     if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
     {
@@ -84,6 +86,7 @@ int sendFile(int linkLayerNumber, char *file)
         }
     }
 
+   
     controlPacket(CTRL_END, CTRLPacket, &size, file);
 
     if (llwrite(linkLayerNumber, CTRLPacket, packetSize) == -1)
@@ -132,6 +135,7 @@ int receiveFile(int linkLayerNumber,char *file)
                 printf("Tempo Restante: %fs\n", rest);
                 printf("Tempo Decorrido: %lds\n", acumTime);
                 printf("Percentagem: %f%%\n\n", lastP);
+		fflush(stdout);
                 lastP = (int)(acumSize / totalSize * 100) + 1;
             }
             dataPacket_s *dataPacket = &(packet.d);
@@ -198,6 +202,9 @@ int readPacket(unsigned char *data, int dataSize, packetType *packetType, packet
         controlPacket_s *controlPacket_s = malloc(sizeof controlPacket_s);
         controlPacket_s->fileName = name;
         controlPacket_s->fileSize = size;
+	printf("\nFileSize %ld\n",*size);
+	printf("FileName %s\n",(char*)name);
+	fflush(stdout);
         controlPacket_s->end = data[0] - 2;
         packet->c = *controlPacket_s;
         return 0;
@@ -244,3 +251,4 @@ void dataPacket(unsigned char *packet, int sequenceNumber, int size)
     packet[3] = (uint8_t)(size % 256);
     return;
 }
+

@@ -2,7 +2,7 @@
 #include <termios.h>
 
 #define TRAMA_SIZE 256
-#define BAUDRATE 115200
+#define BAUDRATE B115200
 
 typedef enum flags
 {
