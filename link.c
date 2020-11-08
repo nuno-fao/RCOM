@@ -10,12 +10,107 @@
 #include <stdint.h>
 #include <sys/time.h>
 
+/**
+ * Function used to setup the linkLayer struct used along the program
+ * @param linkLayer pointer to the struct that will be setup
+ * @param porta 
+ * @param baudrate value of the baudrate to use
+ * @param sequenceNumber starting sequence number
+ * @param timeout amout of time to wait everytime the alarm is used
+ * @param numTransmissions number of tries when sending the same frame and no answer is obtained
+ * @return 0 in case of success
+ */
+int setupLinkLayer(linkLayer *linkLayer, int porta, int baudRate, int sequenceNumber, int timeout, int numTransmissions);
+
+/**
+ * Function used to configure the terminal
+ * @param newtio pointer to the new terminal setup
+ * @param oldtio pointer to the old terminal setup
+ * @param linkLayer pointer to the struct used to configure the new terminal
+ * @param vtime maximum reading time without an answer
+ * @param vmin minimum amount of chars read before read function returns
+ * @return 0 in case of success, -1 otherwise
+ */
+int setTermIO(struct termios *newtio, struct termios *oldtio, linkLayer *linkLayer, int vtime, int vmin);
+
+/**
+ * Function that implements a state machine to read a supervision frame and checks if it contains the expected value
+ * @param linkLayer contains the file descriptor from which to read
+ * @param expected expected value on the frame
+ * @return 0 in case of success, -1 otherwise
+ */
 int receive(linkLayer *linkLayer, char expected);
+
+/**
+ * Function that implements a state machine to read a supervision frame and checks if it contains one of the expected values
+ * @param linkLayer contains the file descriptor from which to read
+ * @param expected array with all the expected values
+ * @param expectedSize size of the expected array
+ * @return index of the value found if it is in the expected array in case of success, -1 otherwise
+ */
+int receive2(linkLayer *linkLayer, char expected[],int expectedSize);
+
+/**
+ * Function writes a supervision frame with a certain value and then implements a state machine to read an answer and checks if it contains the expected value
+ * @param linkLayer contains the file descriptor from which to read
+ * @param expected expected value of the answer
+ * @param send value to send on the supervision frame
+ * @return 0 in case of success, -1 otherwise
+ */
+int send_receive(linkLayer *linkLayer, char expected, char send);
+
+/**
+ * Function that updates the value of the sequence number to be used while creating/reading frames (0 or 1)
+ * @param seqNumber pointer to the sequence to update
+ * @return void
+ */
 void changeSeqNumber(unsigned int *seqNumber);
+
+/**
+ * Function that aplies byte stuffing mechanism to the date param
+ * @param data pointer to the data that is to be stuffed
+ * @param size size of data param
+ * @param stuffedPacket pointer to write the resulting array
+ * @return number of chars written on stuffedPacket
+ */
 int byteStuff(unsigned char *data, int size, uint8_t *stuffedPacket);
+
+/**
+ * Function that aplies the inverse of the byte stuffing mechanism to the date param
+ * @param data pointer to the data that is to be destuffed
+ * @param size size of data param
+ * @return new size of the data param
+ */
 int byteDeStuff(unsigned char *data, int size);
+
+/**
+ * Function that iterates through the packet param and calculate the value of BCC2
+ * @param packet pointer to the data that is to be destuffed
+ * @param length size of packet param
+ * @return value of BCC2
+ */
 uint8_t getBCC2(uint8_t *packet, int length);
+
+/**
+ * Function that fills the headers of a data frame with the parameters passed
+ * @param packet pointer to the data frame
+ * @param length size of data frame
+ * @param A Address field
+ * @param C Control field
+ * @return 0 in case of success
+ */
 int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char C);
+
+/**
+ * Function that fills an array to be a supervision frame
+ * @param flag value of the flags (start and end)
+ * @param endereco address field
+ * @param controlo control field
+ * @param str array to fill
+ * @return void
+ */
+void setHeader(char flag, char endereco, char controlo, char *str);
+
 
 int flag = 1, conta = 1;
 deviceType global_flag;
@@ -35,23 +130,6 @@ void setDefaultBaudRate(int rate){
 
 void setDefaultTramaSize(int size){
 	defaultTramaSize = size;
-}
-
-
-void *getPointer(void *pointer)
-{
-    dataSize;
-    dataSizeCounter;
-    if (dataSize == 0)
-    {
-        dataSize = 16;
-        return malloc(16);
-    }
-    if (dataSizeCounter == dataSize - 1)
-    {
-        return realloc(pointer, dataSize * 2);
-    }
-    return pointer;
 }
 
 void setHeader(char flag, char endereco, char controlo, char *str)
@@ -273,12 +351,6 @@ int setTermIO(struct termios *newtio, struct termios *oldtio, linkLayer *linkLay
     return 0;
 }
 
-int resetTermIO(struct termios *oldtio, int fd)
-{
-    tcsetattr(fd, TCSANOW, oldtio);
-    return 0;
-}
-
 int llopen(int porta, deviceType flag)
 {
     int linkLayerNumber = linkCounter++;
@@ -322,8 +394,6 @@ int llopen(int porta, deviceType flag)
         return -1;
     }
     linkNumber[linkLayerNumber].oltio = oldtio;
-    /*resetTermIO(&oldtio,linkNumber[linkLayerNumber].fd);
-    close(linkNumber[linkLayerNumber].fd);*/
     return linkLayerNumber;
 }
 
@@ -344,8 +414,6 @@ int llclose(int linkLayerNumber)
     {
         return -1;
     }
-    //resetTermIO(&linkNumber[linkLayerNumber].oltio,linkNumber[linkLayerNumber].fd);
-    //close(linkNumber[linkLayerNumber].fd);
     return 0;
 }
 

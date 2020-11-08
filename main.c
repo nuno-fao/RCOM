@@ -28,7 +28,9 @@ int main(int argc, char *argv[])
             return -1;
         else
         {
-            sendFile(linkLayerNumber, argv[2]);
+            if(sendFile(linkLayerNumber, argv[2]) == -1){
+                return -1;
+            }
         }
 	printf("Closing Connectin\n");
         llclose(linkLayerNumber);
@@ -40,7 +42,9 @@ int main(int argc, char *argv[])
             return -1;
         else
         {
-            receiveFile(linkLayerNumber,argv[2]);
+            if(receiveFile(linkLayerNumber,argv[2]) == -1){
+                return -1;
+            }
         }
 	printf("Closing Connection\n");
         llclose(linkLayerNumber);
@@ -102,6 +106,7 @@ int sendFile(int linkLayerNumber, char *file)
     {
         return -1;
     }
+    return 0;
 }
 
 int receiveFile(int linkLayerNumber,char *file)
@@ -156,6 +161,7 @@ int receiveFile(int linkLayerNumber,char *file)
             fd = open(file, O_RDWR | O_NOCTTY | O_CREAT, 0777);
         }
     }
+    return 0;
 }
 
 int readPacket(unsigned char *data, int dataSize, packetType *packetType, packet_u *packet)
