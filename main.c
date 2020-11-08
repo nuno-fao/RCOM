@@ -15,13 +15,10 @@ int main(int argc, char *argv[])
 {
     int arg = atoi(argv[1]);
     srand((unsigned) time(NULL));
+    trama_size = TRAMA_SIZE;
     if(argc>4){
-    	setDefaultBaudRate(atoi(argv[4]));
-    }
-    trama_size = 256;
-    if(argc>5){
-    	setDefaultTramaSize(atoi(argv[5]));
-    	trama_size = atoi(argv[5]);
+    	setDefaultTramaSize(atoi(argv[4]));
+    	trama_size = atoi(argv[4]);
     }
     	
     if (arg == 0)
@@ -33,6 +30,7 @@ int main(int argc, char *argv[])
         {
             sendFile(linkLayerNumber, argv[2]);
         }
+	printf("Closing Connectin\n");
         llclose(linkLayerNumber);
     }
     else
@@ -44,6 +42,7 @@ int main(int argc, char *argv[])
         {
             receiveFile(linkLayerNumber,argv[2]);
         }
+	printf("Closing Connection\n");
         llclose(linkLayerNumber);
     }
 }
@@ -261,4 +260,5 @@ void dataPacket(unsigned char *packet, int sequenceNumber, int size)
     packet[3] = (uint8_t)(size % 256);
     return;
 }
+
 

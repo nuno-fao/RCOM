@@ -165,6 +165,69 @@ int receive(linkLayer *linkLayer, char expected)
     }
 }
 
+int receive2(linkLayer *linkLayer, char expected[],int expectedSize)
+{
+    int res;
+    char rcv_str[1];
+    char A, C;
+    state estado = START;
+    int i = 0;
+    while (true)
+    {
+        res = read(linkLayer->fd, rcv_str, 1);
+        if (res == 0)
+        {
+            return -1;
+        }
+
+      //printf("Receber %x\n", rcv_str[0]);
+        if (*rcv_str == FLAG && estado != BCC)
+        {
+            estado = FLAGRCV;
+        }
+        else if (estado == BCC)
+        {
+            if (*rcv_str != FLAG)
+            {
+                return -1;
+            }
+            return i;
+        }
+        else if (estado == FLAGRCV)
+        {
+            if (*rcv_str != ADDRESS)
+            {
+                return -1;
+            }
+            A = *rcv_str;
+            estado = ARCV;
+        }
+        else if (estado == ARCV)
+        {
+	    for(i=0;i<expectedSize;i++){
+		if (*rcv_str == expected[i])
+            	{
+		    //printf("okkkkk");
+	            C = *rcv_str;
+	            estado = CRCV;
+		    break;
+	        }
+	    }
+	    if(i==expectedSize)
+            	return -1;
+        }
+        else if (estado == CRCV)
+        {
+            if (*rcv_str != (A ^ C))
+            {
+                return -1;
+            }
+            estado = BCC;
+        }
+    }
+}
+
+
 int setupLinkLayer(linkLayer *linkLayer, int porta, int baudRate, int sequenceNumber, int timeout, int numTransmissions)
 {
     sprintf(linkLayer->port, "/dev/ttyS%d", porta);
@@ -230,7 +293,7 @@ int llopen(int porta, deviceType flag)
 
     if (flag == TRANSMITTER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, defaultBaudRate, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, BAUDRATE, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -242,7 +305,7 @@ int llopen(int porta, deviceType flag)
     }
     else if (flag == RECEIVER)
     {
-        setupLinkLayer(&linkNumber[linkLayerNumber], porta, defaultBaudRate, 0, 3, 3);
+       setupLinkLayer(&linkNumber[linkLayerNumber], porta, BAUDRATE, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -317,14 +380,16 @@ int llwrite(int fd, unsigned char *buffer, int length)
     while (conta <= linkNumber[fd].numTransmissions)
     {
 
-        int r = read(linkNumber[fd].fd, answer, 5);
-        if (r == 5 && answer[2] == RR)
+        //int r = read(linkNumber[fd].fd, answer, 5);
+	unsigned char out[2] = {RR,REJ};
+	int r = receive2(&linkNumber[fd],out,2);
+        if (r == 0)
         {
             free(packet);
             free(stuffedPacket);
-            return 1;
+            return length+5;
         }
-        if (r == 5 && answer[2] == REJ)
+        if (r == 1)
         {
             write(linkNumber[fd].fd, stuffedPacket, length + 5);
             alarm(linkNumber[fd].timeout);
@@ -448,7 +513,7 @@ int llread(int fd, uint8_t *buffer)
         size = byteDeStuff(data, i);
 
         bcc2 = getBCC2(data, size - 1);
-        if (errorTest == 1 && rand()%10 == 0){
+        if (rand()%100 <= 20){
             bcc2 = 0x01;
             perror("alright alright\n");
         }
@@ -563,4 +628,5 @@ int byteDeStuff(unsigned char *data, int size)
     //printf("DESTUFF %d\n",sum);
     return finalSize;
 }
+
 
