@@ -267,4 +267,3 @@ void dataPacket(unsigned char *packet, int sequenceNumber, int size)
     return;
 }
 
-
