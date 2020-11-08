@@ -16,13 +16,13 @@ int main(int argc, char *argv[])
     int arg = atoi(argv[1]);
     srand((unsigned) time(NULL));
     trama_size = TRAMA_SIZE;
-    if(argc>4){
-    	setDefaultTramaSize(atoi(argv[4]));
-    	trama_size = atoi(argv[4]);
-    }
     	
     if (arg == 0)
     {
+    	if(argc>4){
+    		setDefaultTramaSize(atoi(argv[4]));
+    		trama_size = atoi(argv[4]);
+    	}
         int linkLayerNumber = llopen(atoi(argv[3]), TRANSMITTER);
         if (linkLayerNumber == -1)
             return -1;
@@ -37,12 +37,16 @@ int main(int argc, char *argv[])
     }
     else
     {
-        int linkLayerNumber = llopen(atoi(argv[3]), RECEIVER);
+    	if(argc>3){
+    		setDefaultTramaSize(atoi(argv[3]));
+    		trama_size = atoi(argv[3]);
+    	}
+        int linkLayerNumber = llopen(atoi(argv[2]), RECEIVER);
         if (linkLayerNumber == -1)
             return -1;
         else
         {
-            if(receiveFile(linkLayerNumber,argv[2]) == -1){
+            if(receiveFile(linkLayerNumber) == -1){
                 return -1;
             }
         }
@@ -109,7 +113,7 @@ int sendFile(int linkLayerNumber, char *file)
     return 0;
 }
 
-int receiveFile(int linkLayerNumber,char *file)
+int receiveFile(int linkLayerNumber)
 {
     int space = trama_size;
     if(space<30) space = 30;
@@ -149,7 +153,7 @@ int receiveFile(int linkLayerNumber,char *file)
                 printf("Tempo Restante: %fs\n", rest);
                 printf("Tempo Decorrido: %lds\n", acumTime);
                 printf("Percentagem: %f%%\n\n", lastP);
-		fflush(stdout);
+		 fflush(stdout);
                 lastP = (int)(acumSize / totalSize * 100) + 1;
             }
             dataPacket_s *dataPacket = &(packet.d);
@@ -158,7 +162,7 @@ int receiveFile(int linkLayerNumber,char *file)
         else if (packetType == CONTROL)
         {
             totalSize = *packet.c.fileSize;
-            fd = open(file, O_RDWR | O_NOCTTY | O_CREAT, 0777);
+            fd = open(packet.c.fileName, O_RDWR | O_NOCTTY | O_CREAT, 0777);
         }
     }
     return 0;

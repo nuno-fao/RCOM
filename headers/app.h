@@ -32,10 +32,9 @@ int sendFile(int linkLayerNumber, char *file);
 /**
  * Function used to create a file with what it receives from llread()
  * @param linkLayerNumber Value to set baudrate
- * @param file pointer to a char array that contains the name of the target file
  * @return -1 if there is any error, 0 if it is successfull
  */
-int receiveFile(int linkLayerNumber,char *file);
+int receiveFile(int linkLayerNumber);
 
 /**
  * Function used to fill a control packet with the information on the arguments
