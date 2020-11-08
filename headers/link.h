@@ -3,6 +3,10 @@
 
 #define TRAMA_SIZE 256
 #define BAUDRATE B115200
+//error probability in percentage
+#define ERROR_PROB 0
+//delay in microseconds
+#define PROPAGATION_DELAY 0  
 
 typedef enum flags
 {

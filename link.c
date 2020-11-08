@@ -505,8 +505,8 @@ int llread(int fd, uint8_t *buffer)
     int size;
     int tries = 0;
     bool flagReached = false;
-    //change this to simulate a propagation delay
-    //usleep(50000);
+    if(PROPAGATION_DELAY
+    usleep(PROPAGATION_DELAY);
     while (tries <= linkNumber[fd].numTransmissions)
     {
 
@@ -583,7 +583,7 @@ int llread(int fd, uint8_t *buffer)
 
         bcc2 = getBCC2(data, size - 1);
         //change this to increase the error probability
-        if (rand()%100 <= -1){
+        if (rand()%100 < ERROR_PROB){
             bcc2 = 0x01;
             perror("alright alright\n");
         }
