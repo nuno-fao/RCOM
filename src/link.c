@@ -504,8 +504,8 @@ int llread(int fd, uint8_t *buffer)
     int size;
     int tries = 0;
     bool flagReached = false;
-    if(PROPAGATION_DELAY
-    usleep(PROPAGATION_DELAY);
+    if(PROPAGATION_DELAY)
+    	usleep(PROPAGATION_DELAY);
     while (tries <= linkNumber[fd].numTransmissions)
     {
         while (!flagReached)
