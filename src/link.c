@@ -48,7 +48,7 @@ int receive(linkLayer *linkLayer, char expected);
  * @param expectedSize size of the expected array
  * @return index of the value found if it is in the expected array in case of success, -1 otherwise
  */
-int receive2(linkLayer *linkLayer, char expected[],int expectedSize);
+int receive2(linkLayer *linkLayer, char expected[], int expectedSize);
 
 /**
  * Function writes a supervision frame with a certain value and then implements a state machine to read an answer and checks if it contains the expected value
@@ -111,7 +111,6 @@ int infoPacket(unsigned char *packet, int length, unsigned char A, unsigned char
  */
 void setHeader(char flag, char endereco, char controlo, char *str);
 
-
 int flag = 1, conta = 1;
 deviceType global_flag;
 
@@ -124,12 +123,14 @@ int dataSizeCounter = 0;
 int defaultBaudRate = 38400;
 int defaultTramaSize = 256;
 
-void setDefaultBaudRate(int rate){
-	defaultBaudRate = rate;
+void setDefaultBaudRate(int rate)
+{
+    defaultBaudRate = rate;
 }
 
-void setDefaultTramaSize(int size){
-	defaultTramaSize = size;
+void setDefaultTramaSize(int size)
+{
+    defaultTramaSize = size;
 }
 
 void setHeader(char flag, char endereco, char controlo, char *str)
@@ -243,7 +244,7 @@ int receive(linkLayer *linkLayer, char expected)
     }
 }
 
-int receive2(linkLayer *linkLayer, char expected[],int expectedSize)
+int receive2(linkLayer *linkLayer, char expected[], int expectedSize)
 {
     int res;
     char rcv_str[1];
@@ -258,7 +259,7 @@ int receive2(linkLayer *linkLayer, char expected[],int expectedSize)
             return -1;
         }
 
-      //printf("Receber %x\n", rcv_str[0]);
+        //printf("Receber %x\n", rcv_str[0]);
         if (*rcv_str == FLAG && estado != BCC)
         {
             estado = FLAGRCV;
@@ -282,17 +283,18 @@ int receive2(linkLayer *linkLayer, char expected[],int expectedSize)
         }
         else if (estado == ARCV)
         {
-	    for(i=0;i<expectedSize;i++){
-		if (*rcv_str == expected[i])
-            	{
-		    //printf("okkkkk");
-	            C = *rcv_str;
-	            estado = CRCV;
-		    break;
-	        }
-	    }
-	    if(i==expectedSize)
-            	return -1;
+            for (i = 0; i < expectedSize; i++)
+            {
+                if (*rcv_str == expected[i])
+                {
+                    //printf("okkkkk");
+                    C = *rcv_str;
+                    estado = CRCV;
+                    break;
+                }
+            }
+            if (i == expectedSize)
+                return -1;
         }
         else if (estado == CRCV)
         {
@@ -304,7 +306,6 @@ int receive2(linkLayer *linkLayer, char expected[],int expectedSize)
         }
     }
 }
-
 
 int setupLinkLayer(linkLayer *linkLayer, int porta, int baudRate, int sequenceNumber, int timeout, int numTransmissions)
 {
@@ -377,7 +378,7 @@ int llopen(int porta, deviceType flag)
     }
     else if (flag == RECEIVER)
     {
-       setupLinkLayer(&linkNumber[linkLayerNumber], porta, BAUDRATE, 0, 3, 3);
+        setupLinkLayer(&linkNumber[linkLayerNumber], porta, BAUDRATE, 0, 3, 3);
         linkNumber[linkLayerNumber].fd = open(linkNumber[linkLayerNumber].port, O_RDWR | O_NOCTTY);
         if (setTermIO(&newtio, &oldtio, &linkNumber[linkLayerNumber], 1, 0))
             return -1;
@@ -444,18 +445,15 @@ int llwrite(int fd, unsigned char *buffer, int length)
     write(linkNumber[fd].fd, stuffedPacket, length + 5);
     alarm(linkNumber[fd].timeout);
     unsigned char answer[5];
-
     while (conta <= linkNumber[fd].numTransmissions)
     {
-
-        //int r = read(linkNumber[fd].fd, answer, 5);
-	unsigned char out[2] = {RR,REJ};
-	int r = receive2(&linkNumber[fd],out,2);
+        unsigned char out[2] = {RR, REJ};
+        int r = receive2(&linkNumber[fd], out, 2);
         if (r == 0)
         {
             free(packet);
             free(stuffedPacket);
-            return length+5;
+            return length + 5;
         }
         if (r == 1)
         {
@@ -495,7 +493,8 @@ int llread(int fd, uint8_t *buffer)
     unsigned char aux;
     unsigned char bcc2;
     int space = defaultTramaSize;
-    if(space<30) space = 30;
+    if (space < 30)
+        space = 30;
     unsigned char data[space * 2 + 5];
     unsigned char answer[5];
     bool erro = false;
@@ -509,7 +508,6 @@ int llread(int fd, uint8_t *buffer)
     usleep(PROPAGATION_DELAY);
     while (tries <= linkNumber[fd].numTransmissions)
     {
-
         while (!flagReached)
         {
             int r = read(linkNumber[fd].fd, &aux, 1);
@@ -583,7 +581,8 @@ int llread(int fd, uint8_t *buffer)
 
         bcc2 = getBCC2(data, size - 1);
         //change this to increase the error probability
-        if (rand()%100 < ERROR_PROB){
+        if (rand() % 100 < ERROR_PROB)
+        {
             bcc2 = 0x01;
             perror("alright alright\n");
         }
@@ -609,7 +608,7 @@ int llread(int fd, uint8_t *buffer)
             setHeader(FLAG, SNDR_COMMAND, REJ, answer);
             write(linkNumber[fd].fd, answer, 5);
             erro = false;
-            i=0;
+            i = 0;
             changeSeqNumber(&linkNumber[fd].sequenceNumber);
             flagReached = false;
         }
@@ -698,5 +697,3 @@ int byteDeStuff(unsigned char *data, int size)
     //printf("DESTUFF %d\n",sum);
     return finalSize;
 }
-
-
