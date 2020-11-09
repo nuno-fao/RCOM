@@ -1,0 +1,6 @@
+para compilar: make
+
+para correr: 
+transmissor:	./build/app 0 <p ex img/pinguim.gif> <porta> [trama size]
+recetor:	./build/app 1 <porta> [trama size]
+	
