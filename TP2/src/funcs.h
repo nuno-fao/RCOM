@@ -1,5 +1,4 @@
-#define SERVER_PORT 6000
-#define SERVER_ADDR "192.168.28.96"
+#define SERVER_PORT 21
 #define STR_LEN 256
 
 struct urlArgs{
@@ -11,5 +10,5 @@ struct urlArgs{
 };
 
 int getIP(char *hostName,char *IP);
-int openSocket();
+int openSocket(char *address, int *fd);
 int getArgsFromUrl(char *url, struct urlArgs *args);
