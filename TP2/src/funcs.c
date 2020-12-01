@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <stdbool.h>
 #include "funcs.h"
 
 int getIP(char *hostName){
@@ -54,4 +55,94 @@ int openSocket(){
 
 	close(sockfd);
 	exit(0);
+}
+
+//ftp://[<user>:<password>@]<host>/<url-path>
+int getArgsFromUrl(char *url, struct urlArgs *args){
+
+    char *substr;
+
+    char *urlAux = malloc(strlen(url));
+    strcpy(urlAux,url);
+
+    char protocol[6];
+    memcpy(protocol,&urlAux[0],6);
+    if(strcmp(protocol,"ftp://")!=0){
+        printf("Not using correct protocol. It should be ftp://\n");
+        return -1;
+    }
+
+    urlAux+=6;
+    if(urlAux[0] != '['){
+        printf("Credentials should start with '['. Like so [<user>:<password>@]\n");
+        return -1;
+    }
+    urlAux++;
+    
+    if(urlAux[0]==':'){
+        printf("No user defined! Use: ftp://[<user>:<password>@]<host>/<url-path>\n");
+        return -1;
+    }
+    else{
+        substr = strtok(urlAux,":");
+        urlAux = strtok(NULL,":");
+
+        memset(args->user, 0, sizeof(args->user));
+        strcpy(args->user, substr);
+
+        // parsing password
+        substr = strtok(urlAux, "@");
+        urlAux = strtok(NULL,"@");
+
+        if (substr == NULL) {
+            printf("Error reading password, should end with '@'. Like this [<user>:<password>@]\n");
+            return -1;
+        }
+
+        memset(args->password, 0, sizeof(args->password));
+        strcpy(args->password, substr);
+
+        if(urlAux[0]!=']'){
+            printf("Error reading credentials, should have ']' after '@'. Like this <user>:<password>@]\n");
+            return -1;
+        }
+        urlAux++;
+    }
+    if(urlAux[0]=='/'){
+        printf("Host not set. Use ftp://[<user>:<password>@]<host>/<url-path>\n");
+        return -1;
+    }
+    substr = strtok(urlAux,"/");
+    urlAux = strtok(NULL,"\0");
+
+    memset(args->host, 0, sizeof(args->host));
+    strcpy(args->host, substr);
+
+    if(strlen(urlAux)==0){
+        printf("No path provided. Use ftp://[<user>:<password>@]<host>/<url-path>\n");
+    }
+
+    char *startFile = strrchr(urlAux,'/');
+
+    if(startFile == NULL){
+        memset(args->path, 0, sizeof(args->path));
+        strcpy(args->path, "");
+
+        memset(args->filename, 0, sizeof(args->filename));
+        strcpy(args->filename, urlAux);
+
+        return 0;
+    }
+
+    int startFileIndex = (int) (startFile-urlAux+1);
+    startFile++;
+
+    memset(args->path, 0, sizeof(args->path));
+    strncpy(args->path, urlAux, startFileIndex);
+
+    memset(args->filename, 0, sizeof(args->filename));
+    strcpy(args->filename, startFile);
+
+    return 0;
+
 }
