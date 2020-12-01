@@ -28,17 +28,17 @@ int getIP(char *hostName, char *IP){
     return 0;
 }
 
-int openSocket(char *address, int *fd){
+int openSocket(char *address, int *fd, int port){
     int	sockfd;
 	struct	sockaddr_in server_addr;
-	char	buf[] = "Mensagem de teste na travessia da pilha TCP/IP\n";  
+	//char	buf[] = "Mensagem de teste na travessia da pilha TCP/IP\n";  
 	int	bytes;
 	
 	/*server address handling*/
 	bzero((char*)&server_addr,sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = inet_addr(address);	/*32 bit Internet address network byte ordered*/
-	server_addr.sin_port = htons(SERVER_PORT);		/*server TCP port must be network byte ordered */
+	server_addr.sin_port = htons(port);		/*server TCP port must be network byte ordered */
     
 	/*open an TCP socket*/
 	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
@@ -182,7 +182,7 @@ int readCommandFromSocket(int sockfd, char *response, char* body){
     return 0;
 }
 
-int getIPFromBody(char *body,char *IP,char *port){
+int getIPFromBody(char *body,char *IP,int *port){
     char *aux, *aux2;
     aux = strtok(body,"(");
     aux = strtok(NULL,")");
@@ -197,7 +197,6 @@ int getIPFromBody(char *body,char *IP,char *port){
     
     sprintf(IP,"%s.%s.%s.%s",lista[0],lista[1],lista[2],lista[3]);
 
-    int porta = atoi(lista[4]) * 256 + atoi(lista[5]);
-    sprintf(port,"%d",porta);
+    *port = atoi(lista[4]) * 256 + atoi(lista[5]);
     
 }

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "funcs.h"
 
 int main(int argc, char *argv[]){
@@ -23,10 +24,10 @@ int main(int argc, char *argv[]){
        printf("failed retrieving IP\n");
        return -1;
     }
-    //printf("IP: %s\n",IP);
+    printf("IP: %s\n",IP);
 
-    int sockfd;
-    if(openSocket(IP,&sockfd) != 0){
+    int connectionSocket;
+    if(openSocket(IP,&connectionSocket,SERVER_PORT) != 0){
         printf("failed opening socket\n");
        return -1;
     }
@@ -34,28 +35,39 @@ int main(int argc, char *argv[]){
     char response[4];
     char body[1024];
     response[3]=0;
-    readCommandFromSocket(sockfd,response,body);
+    readCommandFromSocket(connectionSocket,response,body);
     if(response[0]!='2'){
         printf("Error estabilishing connection\n");
         return -1;
     }
 
 
-    writeToSocket(sockfd,"user",args.user);
-    readCommandFromSocket(sockfd,response,body);
+    writeToSocket(connectionSocket,"user",args.user);
+    readCommandFromSocket(connectionSocket,response,body);
 
-    writeToSocket(sockfd,"pass",args.password);
-    readCommandFromSocket(sockfd,response,body);
+    writeToSocket(connectionSocket,"pass",args.password);
+    readCommandFromSocket(connectionSocket,response,body);
 
     char pasvIP[15];
-    char port[8];
-    writeToSocket(sockfd,"pasv","");
-    readCommandFromSocket(sockfd,response,body);
-    getIPFromBody(body,pasvIP,port);
+    int port;
+    writeToSocket(connectionSocket,"pasv","");
+    readCommandFromSocket(connectionSocket,response,body);
+    getIPFromBody(body,pasvIP,&port);
 
     printf("IP: %s \n",pasvIP);
-    printf("Port: %s \n",port);
-    
+    printf("Port: %d \n",port);
+
+    int dataSocket;
+    if(openSocket(pasvIP,&dataSocket,port) != 0){
+        printf("failed opening data socket\n");
+        return -1;
+    }
+    //printf("%d\n",dataSocket);
+
+    char *aux = strcat(args.path,args.filename);
+    printf("%s \n",aux);
+    writeToSocket(connectionSocket,"retr",aux);
+    readCommandFromSocket(dataSocket,response,body);
 
     return 0;
 }
