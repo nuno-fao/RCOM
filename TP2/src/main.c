@@ -65,9 +65,12 @@ int main(int argc, char *argv[]){
     //printf("%d\n",dataSocket);
 
     char *aux = strcat(args.path,args.filename);
-    printf("%s \n",aux);
-    writeToSocket(connectionSocket,"retr",aux);
-    readCommandFromSocket(dataSocket,response,body);
+    printf("%s \n",args.filename);
+    writeToSocket(connectionSocket,"retr",args.filename);
+    readCommandFromSocket(connectionSocket,response,body);
 
     return 0;
 }
+
+
+
