@@ -62,10 +62,7 @@ int main(int argc, char *argv[]){
         printf("failed opening data socket\n");
         return -1;
     }
-    //printf("%d\n",dataSocket);
-
-    char *aux = strcat(args.path,args.filename);
-    printf("%s \n",args.filename);
+ 
     writeToSocket(connectionSocket,"retr",args.filename);
     readCommandFromSocket(connectionSocket,response,body);
 
