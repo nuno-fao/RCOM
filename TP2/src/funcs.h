@@ -12,3 +12,6 @@ struct urlArgs{
 int getIP(char *hostName,char *IP);
 int openSocket(char *address, int *fd);
 int getArgsFromUrl(char *url, struct urlArgs *args);
+int writeToSocket(int sockfd,char *command,char *text);
+int readCommandFromSocket(int sockfd, char *response, char* body);
+int getIPFromBody(char *body,char *IP, char *port);

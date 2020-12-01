@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/ioctl.h>
 #include "funcs.h"
 
 int getIP(char *hostName, char *IP){
@@ -145,4 +146,58 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
 
     return 0;
 
+}
+
+int writeToSocket(int sockfd,char *command,char *text){
+    char buffer[STR_LEN];
+
+    snprintf(buffer, sizeof(buffer) , "%s %s\n", command, text);
+
+
+    int written = write(sockfd, buffer, strlen(buffer));
+
+    //printf("TAMANHO: %d LENGTH: %d\n",written,strlen(buffer));
+    if (written != strlen(buffer)){
+        printf("Error writing to socket\n");
+        return -1;
+    }
+}
+
+int readCommandFromSocket(int sockfd, char *response, char* body){
+    //memset(response,0,3);
+    usleep(100000);
+    read(sockfd,response,3);
+
+    printf("%s",response);
+
+    int len = 0;
+    ioctl(sockfd, FIONREAD, &len);
+
+    body[len]=0;
+
+    read(sockfd,body,len);
+
+    printf("%s \n",body);
+    
+    return 0;
+}
+
+int getIPFromBody(char *body,char *IP,char *port){
+    char *aux, *aux2;
+    aux = strtok(body,"(");
+    aux = strtok(NULL,")");
+
+    char *lista[6];
+    aux2 = strtok(aux,",");
+    for(int i=0;i<6;i++){
+        lista[i] = aux2;
+        aux2 = strtok(NULL,",");
+    }
+    
+    
+    sprintf(IP,"%s.%s.%s.%s",lista[0],lista[1],lista[2],lista[3]);
+
+    int porta = atoi(lista[4]) * 256 + atoi(lista[5]);
+    sprintf(port,"%d",porta);
+    
 }

@@ -31,6 +31,31 @@ int main(int argc, char *argv[]){
        return -1;
     }
 
+    char response[4];
+    char body[1024];
+    response[3]=0;
+    readCommandFromSocket(sockfd,response,body);
+    if(response[0]!='2'){
+        printf("Error estabilishing connection\n");
+        return -1;
+    }
+
+
+    writeToSocket(sockfd,"user",args.user);
+    readCommandFromSocket(sockfd,response,body);
+
+    writeToSocket(sockfd,"pass",args.password);
+    readCommandFromSocket(sockfd,response,body);
+
+    char pasvIP[15];
+    char port[8];
+    writeToSocket(sockfd,"pasv","");
+    readCommandFromSocket(sockfd,response,body);
+    getIPFromBody(body,pasvIP,port);
+
+    printf("IP: %s \n",pasvIP);
+    printf("Port: %s \n",port);
+    
 
     return 0;
 }
