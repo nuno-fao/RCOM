@@ -12,15 +12,17 @@
 #include <stdbool.h>
 #include "funcs.h"
 
-int getIP(char *hostName){
+int getIP(char *hostName, char *IP){
     struct hostent *h;
     if ((h=gethostbyname(hostName)) == NULL) {  
         herror("gethostbyname");
         exit(1);
     }
 
-    printf("Host name  : %s\n", h->h_name);
-    printf("IP Address : %s\n",inet_ntoa(*((struct in_addr *)h->h_addr)));
+    strcpy(IP, inet_ntoa(*((struct in_addr *)h->h_addr)));
+
+    //printf("Host name  : %s\n", h->h_name);
+    //printf("IP Address : %s\n",inet_ntoa(*((struct in_addr *)h->h_addr)));
 
     return 0;
 }
@@ -73,11 +75,6 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
     }
 
     urlAux+=6;
-    if(urlAux[0] != '['){
-        printf("Credentials should start with '['. Like so [<user>:<password>@]\n");
-        return -1;
-    }
-    urlAux++;
     
     if(urlAux[0]==':'){
         printf("No user defined! Use: ftp://[<user>:<password>@]<host>/<url-path>\n");
@@ -92,7 +89,8 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
 
         // parsing password
         substr = strtok(urlAux, "@");
-        urlAux = strtok(NULL,"@");
+        urlAux = strtok(NULL,"\0");
+        urlAux++;
 
         if (substr == NULL) {
             printf("Error reading password, should end with '@'. Like this [<user>:<password>@]\n");
@@ -102,11 +100,6 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
         memset(args->password, 0, sizeof(args->password));
         strcpy(args->password, substr);
 
-        if(urlAux[0]!=']'){
-            printf("Error reading credentials, should have ']' after '@'. Like this <user>:<password>@]\n");
-            return -1;
-        }
-        urlAux++;
     }
     if(urlAux[0]=='/'){
         printf("Host not set. Use ftp://[<user>:<password>@]<host>/<url-path>\n");

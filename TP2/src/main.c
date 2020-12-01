@@ -13,11 +13,19 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
-    //printf("User: %s\n", args.user);
-    //printf("Password: %s\n", args.password);
-    //printf("Host name: %s\n", args.host);
-    //printf("Path name: %s\n", args.path);
-    //printf("File name: %s\n", args.filename);
+    printf("User: %s\n", args.user);
+    printf("Password: %s\n", args.password);
+    printf("Host name: %s\n", args.host);
+    printf("Path name: %s\n", args.path);
+    printf("File name: %s\n", args.filename);
+
+    // char *IP;
+    // if(getIP(args.host,IP)!=0){
+    //     printf("failed retrieving IP\n");
+    //     return -1;
+    // }
+
+
 
     return 0;
 }

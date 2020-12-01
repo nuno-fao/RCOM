@@ -10,6 +10,6 @@ struct urlArgs{
     char filename[STR_LEN];
 };
 
-int getIP(char *hostName);
+int getIP(char *hostName,char *IP);
 int openSocket();
 int getArgsFromUrl(char *url, struct urlArgs *args);
