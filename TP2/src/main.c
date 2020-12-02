@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
 
     writeToSocket(connectionSocket,"pass",args.password);
     readCommandFromSocket(connectionSocket,response,body);
-
+    
     char pasvIP[15];
     int port;
     writeToSocket(connectionSocket,"pasv","");
@@ -63,7 +63,8 @@ int main(int argc, char *argv[]){
         return -1;
     }
  
-    writeToSocket(connectionSocket,"retr",args.filename);
+    strcat(args.path, args.filename);
+    writeToSocket(connectionSocket,"retr",args.path);
     readCommandFromSocket(connectionSocket,response,body);
     readFromSocketWriteToFile(dataSocket,args.filename);
 

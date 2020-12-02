@@ -1,4 +1,4 @@
-#define SERVER_PORT 21
+#define SERVER_PORT 2221
 #define STR_LEN 256
 
 struct urlArgs{
