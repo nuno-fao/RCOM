@@ -65,6 +65,7 @@ int main(int argc, char *argv[]){
  
     writeToSocket(connectionSocket,"retr",args.filename);
     readCommandFromSocket(connectionSocket,response,body);
+    readFromSocketWriteToFile(dataSocket,args.filename);
 
     return 0;
 }

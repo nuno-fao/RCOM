@@ -11,6 +11,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/ioctl.h>
+#include <fcntl.h>
+
 #include "funcs.h"
 
 int getIP(char *hostName, char *IP){
@@ -199,4 +201,14 @@ int getIPFromBody(char *body,char *IP,int *port){
 
     *port = atoi(lista[4]) * 256 + atoi(lista[5]);
     
+}
+
+
+int readFromSocketWriteToFile(int fd,char *filename){
+	int fileFd = open(filename,O_RDWR | O_TRUNC | O_CREAT,0666);
+	char aux[1024];
+	int size = 0;
+	while((size = read(fd,aux,1024))){
+		write(fileFd,aux,size);
+	}
 }
