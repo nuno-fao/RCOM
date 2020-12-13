@@ -11,7 +11,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/ioctl.h>
-#include <fcntl.h>
+#include <fcntl.h>       
+#include <libgen.h>
 
 #include "funcs.h"
 
@@ -86,7 +87,16 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
 
     urlAux+=6;
     
-    if(urlAux[0]==':'){
+    char *ptr_at = strchr(urlAux,'@');
+    char *ptr_tp = strchr(urlAux,':');
+    if(ptr_at == NULL || ptr_tp == NULL){
+    	bzero(args->user,256);
+    	bzero(args->password,256);
+    	
+    	strcpy(args->user, "anonymous");
+    	strcpy(args->password, "1234");
+    }
+    else if(urlAux[0]==':'){
         printf("No user defined! Use: ftp://[<user>:<password>@]<host>/<url-path>\n");
         return -1;
     }
@@ -125,7 +135,11 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
         printf("No path provided. Use ftp://[<user>:<password>@]<host>/<url-path>\n");
     }
 
+
+	/*
     char *startFile = strrchr(urlAux,'/');
+    
+    printf("%s\n",startFile);
 
     if(startFile == NULL){
         memset(args->path, 0, sizeof(args->path));
@@ -144,7 +158,21 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
     strncpy(args->path, urlAux, startFileIndex);
 
     memset(args->filename, 0, sizeof(args->filename));
-    strcpy(args->filename, startFile);
+    strcpy(args->filename, startFile);*/
+    
+    char auxcpy[256];
+    strcpy(auxcpy,urlAux);
+    
+    printf("COPIA: %s\n ORIGINAL: %s\n",auxcpy,urlAux);
+    
+    strcpy(args->path,"/");
+    strcpy(args->path,dirname(urlAux));
+    strcpy(args->filename,basename(auxcpy));
+    
+    if(!strcmp(args->path,".")){
+    	strcpy(args->path,"");
+    }
+    printf("%s%s\n",args->path,args->filename);
 
     return 0;
 
@@ -171,6 +199,7 @@ int readCommandFromSocket(int sockfd, char *response, char* body){
     read(sockfd,response,3);
 
     printf("%s",response);
+    
 
     int len = 0;
     ioctl(sockfd, FIONREAD, &len);
@@ -180,6 +209,11 @@ int readCommandFromSocket(int sockfd, char *response, char* body){
     read(sockfd,body,len);
 
     printf("%s \n",body);
+    int r = atoi(response);
+    if(r>=500 && r<600){
+    	printf("ERROR, aborting connection\n");
+    	exit(1);
+    }
     
     return 0;
 }
@@ -208,7 +242,14 @@ int readFromSocketWriteToFile(int fd,char *filename){
 	int fileFd = open(filename,O_RDWR | O_TRUNC | O_CREAT,0666);
 	char aux[1024];
 	int size = 0;
+	long long unsigned int accum = 0;
 	while((size = read(fd,aux,1024))){
+		if(accum%256==0){
+			printf("%f mibs transfered\n",(float)accum/1024);
+			fflush(stdout);
+			//accum = 0;
+		}
 		write(fileFd,aux,size);
+		accum++;
 	}
 }

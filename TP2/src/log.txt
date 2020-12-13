@@ -1,0 +1,14 @@
+IP: 192.168.109.136
+220 Welcome to netlab-FTP server
+ 
+230 Login successful.
+ 
+230 Already logged in.
+ 
+227 Entering Passive Mode (192,168,109,136,168,85).
+ 
+IP: 192.168.109.136 
+Port: 43093 
+150 Opening BINARY mode data connection for pub.txt (672 bytes).
+226 Transfer complete.
+ 
