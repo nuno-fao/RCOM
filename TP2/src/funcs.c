@@ -110,7 +110,7 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
         // parsing password
         substr = strtok(urlAux, "@");
         urlAux = strtok(NULL,"\0");
-        urlAux++;
+        //urlAux++;
 
         if (substr == NULL) {
             printf("Error reading password, should end with '@'. Like this [<user>:<password>@]\n");
@@ -163,7 +163,7 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
     char auxcpy[256];
     strcpy(auxcpy,urlAux);
     
-    printf("COPIA: %s\n ORIGINAL: %s\n",auxcpy,urlAux);
+    printf("COPIA: %s\nORIGINAL: %s\n",auxcpy,urlAux);
     
     strcpy(args->path,"/");
     strcpy(args->path,dirname(urlAux));
