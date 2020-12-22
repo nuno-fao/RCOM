@@ -38,15 +38,23 @@ int main(int argc, char *argv[]){
     readCommandFromSocket(connectionSocket,response,body);
     if(response[0]!='2'){
         printf("Error estabilishing connection\n");
-        return -1;
+        exit(1);
     }
 
 
     writeToSocket(connectionSocket,"user",args.user);
     readCommandFromSocket(connectionSocket,response,body);
+    if(response[0]!='2' && (response[0]!='3')){
+        printf("Error estabilishing connection(User error)\n");
+        exit(1);
+    }
 
     writeToSocket(connectionSocket,"pass",args.password);
     readCommandFromSocket(connectionSocket,response,body);
+    if(response[0]!='2'){
+        printf("Error estabilishing connection(Pass error)\n");
+        exit(1);
+    }
     
     //writeToSocket(connectionSocket,"binary","");
     //readCommandFromSocket(connectionSocket,response,body);
@@ -55,12 +63,20 @@ int main(int argc, char *argv[]){
     	printf("%s\n",args.path);
     	writeToSocket(connectionSocket,"cwd",args.path);
     	readCommandFromSocket(connectionSocket,response,body);
+    	if(response[0]!='2'){
+        	printf("Error estabilishing connection(path error)\n");
+        	exit(1);
+    	}
     }
     
     char pasvIP[15];
     int port;
     writeToSocket(connectionSocket,"pasv","");
     readCommandFromSocket(connectionSocket,response,body);
+    if(response[0]!='2'){
+        printf("Error estabilishing connection(pasv error)\n");
+        exit(1);
+    }
     getIPFromBody(body,pasvIP,&port);
 
     printf("IP: %s \n",pasvIP);
@@ -77,6 +93,11 @@ int main(int argc, char *argv[]){
 
     writeToSocket(connectionSocket,"retr",args.filename);
     readCommandFromSocket(connectionSocket,response,body);
+    if(response[0]!='1' || response[1]!='5'){
+        printf("Error estabilishing connection(retr error)\n");
+        exit(1);
+    }
+    
     readFromSocketWriteToFile(dataSocket,args.filename);
 
     return 0;

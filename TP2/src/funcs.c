@@ -163,8 +163,6 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
     char auxcpy[256];
     strcpy(auxcpy,urlAux);
     
-    printf("COPIA: %s\nORIGINAL: %s\n",auxcpy,urlAux);
-    
     strcpy(args->path,"/");
     strcpy(args->path,dirname(urlAux));
     strcpy(args->filename,basename(auxcpy));
@@ -172,6 +170,7 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
     if(!strcmp(args->path,".")){
     	strcpy(args->path,"");
     }
+    printf("%s %s\n",args->user,args->password);
     printf("%s%s\n",args->path,args->filename);
 
     return 0;
