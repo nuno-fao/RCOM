@@ -1,0 +1,24 @@
+configure terminal
+no vlan 2-4094
+exit
+copy flash:tuxy-cleanstartup-config
+reload
+
+configure terminal
+vlan 10
+end
+
+configure terminal
+vlan 11
+end
+
+
+para cada pc :
+
+configure terminal
+interface fastethernet 0/PORTA
+switchport mode access
+switchport access vlan (10 ou 11)
+end
+
+
