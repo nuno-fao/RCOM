@@ -134,31 +134,6 @@ int getArgsFromUrl(char *url, struct urlArgs *args){
     if(strlen(urlAux)==0){
         printf("No path provided. Use ftp://[<user>:<password>@]<host>/<url-path>\n");
     }
-
-
-	/*
-    char *startFile = strrchr(urlAux,'/');
-    
-    printf("%s\n",startFile);
-
-    if(startFile == NULL){
-        memset(args->path, 0, sizeof(args->path));
-        strcpy(args->path, "");
-
-        memset(args->filename, 0, sizeof(args->filename));
-        strcpy(args->filename, urlAux);
-
-        return 0;
-    }
-
-    int startFileIndex = (int) (startFile-urlAux+1);
-    startFile++;
-
-    memset(args->path, 0, sizeof(args->path));
-    strncpy(args->path, urlAux, startFileIndex);
-
-    memset(args->filename, 0, sizeof(args->filename));
-    strcpy(args->filename, startFile);*/
     
     char auxcpy[256];
     strcpy(auxcpy,urlAux);
@@ -190,6 +165,7 @@ int writeToSocket(int sockfd,char *command,char *text){
         printf("Error writing to socket\n");
         return -1;
     }
+    return 0;
 }
 
 int readCommandFromSocket(int sockfd, char *response, char* body){
@@ -234,6 +210,7 @@ int getIPFromBody(char *body,char *IP,int *port){
 
     *port = atoi(lista[4]) * 256 + atoi(lista[5]);
     
+    return 0;
 }
 
 
@@ -251,4 +228,5 @@ int readFromSocketWriteToFile(int fd,char *filename){
 		write(fileFd,aux,size);
 		accum++;
 	}
+    return 0;
 }

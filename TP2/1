@@ -1,7 +1,0 @@
-/etc/init.d/networking restart
-
-3:
-	ifconfig eth0 172.16.10.1/24
-	
-4:
-	ifconfig eth0 172.16.10.254/24

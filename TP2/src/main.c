@@ -100,6 +100,16 @@ int main(int argc, char *argv[]){
     
     readFromSocketWriteToFile(dataSocket,args.filename);
 
+    writeToSocket(connectionSocket,"quit",args.filename);
+    readCommandFromSocket(connectionSocket,response,body);
+    if(response[0]!='2'){
+        printf("Error estabilishing connection(retr error)\n");
+        exit(1);
+    }
+    else{
+        printf("Closing connection!\n");
+    }
+
     return 0;
 }
 
