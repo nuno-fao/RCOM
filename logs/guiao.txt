@@ -1,0 +1,155 @@
+reboot switch:
+	configure terminal
+	no vlan 2-4094
+	exit
+	copy flash:gnu1-clean startup-config
+	reoload
+reboot router:
+	copy flash:gnu1-clean startup-config
+	reload
+-----------------------------------------------------
+EXP 1
+gnu3: ifconfig eth0 172.16.10.1/24
+gnu4: ifconfig eth0 172.16.10.254/24
+testar: ping 172.16.10.254
+-----------------------------------------------------
+EXP 2
+gnu2: ifconfig eth0 172.16.11.1/24
+
+configure terminal
+vlan 10,11
+end
+
+configure terminal
+interface fastethernet 0/porta,porta2,porta3
+switchport mode access
+switchport access vlan 10,11
+end
+
+testar: ping 172.16.10.254
+-----------------------------------------------------
+EXP 3
+gnu4: ifconfig eth1 172.16.11.253/24
+
+configure terminal
+interface fastethernet 0/porta
+switchport mode access
+switchport access vlan 11
+end
+
+gnu2: route add -net 172.16.10.0/24 gw 172.16.11.253
+gnu3: route add -net 172.16.11.0/24 gw 172.16.10.254
+gnu4: echo 1 > /proc/sys/net/ipv4/ip_forward
+      echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+
+testar: show vlan brief
+	no gnu3: ping 172.16.11.1
+-----------------------------------------------------
+EXP 4
+no switch ainda: 
+configure terminal
+interface fastethernet 0/porta
+switchport mode access
+switchport access vlan 11
+end
+
+no router:
+interface fastethernet 0/0
+ip address 172.16.11.254 255.255.255.0
+no shutdown
+exit
+
+interface fastethernet 0/1
+ip address 172.16.2.19 255.255.255.0
+no shutdown
+exit
+
+ip route 0.0.0.0 0.0.0.0 172.16.2.254
+ip route 172.16.10.0 255.255.255.0 172.16.11.253
+
+no gnu2:
+	route add -net 172.16.2.0/24 gw 172.16.11.254
+	route add default gw 172.16.11.254
+no gnu3:
+	route add default gw 172.16.10.254
+no gnu4:
+	route add -net 172.16.2.0/24 gw 172.16.11.254
+	route add default gw 172.16.11.254
+
+AGORA PARA LOGS
+no gnu3:
+		ping 172.16.10.254  #eth0 tux24
+		ping 172.16.11.253  #eth1 tux24
+		ping 172.16.11.1    #eth0 tux22
+		ping 172.16.11.254  #eth0 Router
+		ping 172.16.2.29    #eth1 Router	(guarda captura, abre outra)
+
+no gnu2:
+	echo 0 > /proc/sys/net/ipv4/conf/eth0/accept_redirects
+	echo 0 > /proc/sys/net/ipv4/conf/all/accept_redirects
+
+	route -n
+	route del -net 172.16.10.0 gw 172.16.11.253 netmask 255.255.255.0 dev eth0
+	ping 172.16.10.1
+	traceroute 172.16.10.1
+	traceroute -l 172.16.10.1			(guarda captura, abre outra)
+
+	route add -net 172.16.10.0/24 gw 172.16.11.253
+	traceroute 172.16.10.1
+	route -n
+	route del -net 172.16.10.0 gw 172.16.11.253 netmask 255.255.255.0 dev eth0
+	echo 1 > /proc/sys/net/ipv4/conf/eth0/accept_redirects 
+	echo 1 > /proc/sys/net/ipv4/conf/all/accept_redirects
+	ping 172.16.20.1            #eth0 
+	traceroute 172.16.10.1      #eth0 tux23
+	traceroute -l 172.16.10.1   #eth0 tux23		(guarda captura)
+
+ABRE CAPTURA NO 3
+no gnu3:
+	ping 172.16.2.254
+
+Adicionar NAT
+conf t
+interface fastethernet 0/0     
+ip address 172.16.11.254 255.255.255.0 
+no shutdown 
+ip nat inside        
+exit
+
+interface fastethernet 0/1
+ip address 172.16.2.19 255.255.255.0 
+no shutdown 
+ip nat outside       
+exit 
+
+ip nat pool ovrld 172.16.2.19 172.16.2.19 prefix 24
+ip nat inside source list 1 pool ovrld overload 
+
+access-list 1 permit 172.16.10.0 0.0.0.7 
+access-list 1 permit 172.16.11.0 0.0.0.7
+
+iproute 0.0.0.0 0.0.0.0 172.16.2.254
+iproute 172.16.10.0 255.255.255.0 172.16.11.253
+end
+
+	ping 172.16.2.254	(guarda captura)
+-----------------------------------------------------
+EXP 5
+nos 3 gnus:
+	nano etc/resolv.conf
+	search netlab.fe.up.pt
+	nameserver 172.16.2.1
+
+LOGS
+	ping ftp.up.pt
+	ping google.com
+-----------------------------------------------------
+EXP 6
+sacar app e dar make
+COMEÇAR CAPTURA
+	./download ftp://ftp.up.pt/pub/CPAN/robots.txt (guarda captura)
+COMEÇAR CAPTURA
+no gnu3: ./download ftp://ftp.up.pt/pub/ubuntu/dists/bionic/Contents-amd64.gz
+no gnu2: ./download ftp://ftp.up.pt/pub/CPAN/robots.txt
+	(guarda captura)
+
